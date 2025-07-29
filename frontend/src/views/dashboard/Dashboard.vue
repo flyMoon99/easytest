@@ -211,7 +211,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { useTestStore } from '@/stores'
+import { useTestStore } from '@/stores/test'
 import BaseButton from '@/components/base/BaseButton.vue'
 import BaseCard from '@/components/base/BaseCard.vue'
 import type { TestRecord } from '@/types'

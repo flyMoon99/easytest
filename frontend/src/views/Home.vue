@@ -17,7 +17,7 @@
           <!-- 右侧操作 -->
           <div class="flex items-center space-x-4">
             <template v-if="authStore.isAuthenticated">
-              <span class="text-sm text-gray-600">{{ authStore.user?.emailAbbr }}</span>
+              <span class="text-sm text-gray-600">{{ authStore.userInitials }}</span>
               <BaseButton 
                 variant="outline" 
                 size="sm"
@@ -182,7 +182,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores'
+import { useAuthStore } from '@/stores/auth'
 import BaseButton from '@/components/base/BaseButton.vue'
 import BaseCard from '@/components/base/BaseCard.vue'
 

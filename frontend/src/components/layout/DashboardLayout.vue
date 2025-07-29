@@ -21,7 +21,7 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import { RouterView } from 'vue-router'
-import { useTestStore } from '@/stores'
+import { useTestStore } from '@/stores/test'
 import AppHeader from './AppHeader.vue'
 import AppSidebar from './AppSidebar.vue'
 
