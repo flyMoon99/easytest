@@ -22,7 +22,7 @@ app.use(helmet({
       defaultSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
       scriptSrc: ["'self'"],
-      imgSrc: ["'self'", "data:", "https:"],
+      imgSrc: ["'self'", "data:", "https:", "http://localhost:3001"],
     },
   },
 }));
@@ -31,7 +31,7 @@ app.use(helmet({
 app.use(cors({
   origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
@@ -61,8 +61,33 @@ if (process.env.NODE_ENV === 'development') {
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// 静态文件服务（如果需要）
+// 静态文件服务
 app.use('/uploads', express.static('uploads'));
+// 为screenshots路径单独配置CORS
+app.use('/screenshots', cors({
+  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  credentials: true,
+  methods: ['GET', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  exposedHeaders: ['Content-Length', 'Content-Type']
+}), (req, res, next) => {
+  // 设置允许跨域资源访问的响应头
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  next();
+}, express.static('public/screenshots'));
+
+// 为videos路径配置CORS和静态文件服务
+app.use('/videos', cors({
+  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  credentials: true,
+  methods: ['GET', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  exposedHeaders: ['Content-Length', 'Content-Type']
+}), (req, res, next) => {
+  // 设置允许跨域资源访问的响应头
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  next();
+}, express.static('public/uploads/videos'));
 
 // API路由
 app.use('/api', routes);
@@ -158,4 +183,4 @@ process.on('SIGINT', () => {
 // 启动服务器
 startServer();
 
-export default app; 
+export default app;

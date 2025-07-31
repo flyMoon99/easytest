@@ -1,5 +1,8 @@
 import express from 'express';
 import authRoutes from './auth.js';
+import testCaseRoutes from './testCase.js';
+import videoRoutes from './video.js';
+import aiChatRoutes from './aiChat.js';
 import { successResponse } from '../utils/response.js';
 
 const router = express.Router();
@@ -28,6 +31,8 @@ router.get('/', (req, res) => {
     description: '智能化测试平台后端服务',
     endpoints: {
       auth: '/api/auth',
+      testcases: '/api/testcases',
+      videos: '/api/videos',
       health: '/api/health'
     },
     documentation: 'API文档待完善'
@@ -37,4 +42,13 @@ router.get('/', (req, res) => {
 // 认证路由
 router.use('/auth', authRoutes);
 
-export default router; 
+// 测试用例路由
+router.use('/testcases', testCaseRoutes);
+
+// 视频管理路由
+router.use('/videos', videoRoutes);
+
+// AI对话路由
+router.use('/ai-chat', aiChatRoutes);
+
+export default router;

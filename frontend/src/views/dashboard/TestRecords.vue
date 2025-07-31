@@ -56,7 +56,7 @@
           </div>
           <div class="ml-3">
             <p class="text-sm font-medium text-gray-500">运行中</p>
-            <p class="text-lg font-semibold text-gray-900">{{ testStore.statistics.running }}</p>
+                            <p class="text-lg font-semibold text-gray-900">{{ testStore.statistics.screened }}</p>
           </div>
         </div>
       </div>
@@ -90,7 +90,7 @@
             >
               <option value="">全部状态</option>
               <option value="pending">等待中</option>
-              <option value="running">运行中</option>
+                              <option value="screened">已截图</option>
               <option value="completed">已完成</option>
               <option value="failed">失败</option>
             </select>
@@ -258,8 +258,10 @@ const filteredTests = computed(() => {
 
 const getStatusStyle = (status: TestRecord['status']) => {
   const styles = {
-    pending: 'bg-gray-100 text-gray-800',
-    running: 'bg-yellow-100 text-yellow-800',
+    pending: 'bg-yellow-100 text-yellow-800',
+            screened: 'bg-orange-100 text-orange-800',
+    screened: 'bg-orange-100 text-orange-800',
+    analyzed: 'bg-purple-100 text-purple-800',
     completed: 'bg-green-100 text-green-800',
     failed: 'bg-red-100 text-red-800'
   }
@@ -268,8 +270,10 @@ const getStatusStyle = (status: TestRecord['status']) => {
 
 const getStatusDotColor = (status: TestRecord['status']) => {
   const colors = {
-    pending: 'bg-gray-400',
-    running: 'bg-yellow-400',
+    pending: 'bg-yellow-400',
+            screened: 'bg-orange-400',
+    screened: 'bg-orange-400',
+    analyzed: 'bg-purple-400',
     completed: 'bg-green-400',
     failed: 'bg-red-400'
   }
@@ -278,8 +282,10 @@ const getStatusDotColor = (status: TestRecord['status']) => {
 
 const getStatusText = (status: TestRecord['status']) => {
   const texts = {
-    pending: '等待中',
-    running: '运行中',
+    pending: '等待截图',
+            screened: '已截图',
+    screened: '已截图',
+    analyzed: '已解析',
     completed: '已完成',
     failed: '失败'
   }

@@ -51,6 +51,24 @@ const router = createRouter({
           component: () => import('@/views/dashboard/TestDetail.vue'),
           meta: { title: '测试详情 - 易测平台' },
           props: true
+        },
+        {
+          path: 'video/new',
+          name: 'video-new',
+          component: () => import('@/views/dashboard/VideoNew.vue'),
+          meta: { title: '新增视频 - 易测平台' }
+        },
+        {
+          path: 'video/list',
+          name: 'video-list',
+          component: () => import('@/views/dashboard/VideoList.vue'),
+          meta: { title: '视频列表 - 易测平台' }
+        },
+        {
+          path: 'ai-chat',
+          name: 'ai-chat',
+          component: () => import('@/views/dashboard/AiChat.vue'),
+          meta: { title: 'AI对话 - 易测平台' }
         }
       ]
     },

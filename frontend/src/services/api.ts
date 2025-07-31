@@ -1,11 +1,12 @@
 import axios from 'axios'
 import type { AxiosInstance, AxiosResponse } from 'axios'
 import type { LoginForm, RegisterForm, AuthResponse } from '@/types/auth'
+import type { TestRecord, TestForm } from '@/types/test'
 
 // 创建axios实例
 const api: AxiosInstance = axios.create({
   baseURL: 'http://localhost:3001/api',
-  timeout: 10000,
+  timeout: 120000, // 增加到120秒，适应AI分析的时间需求
   headers: {
     'Content-Type': 'application/json'
   }
@@ -75,9 +76,56 @@ export const healthAPI = {
   check: (): Promise<AuthResponse> => api.get('/health')
 }
 
+// 测试用例相关API
+export const testCaseAPI = {
+  // 创建测试用例
+  create: (testData: TestForm): Promise<{ success: boolean; data: TestRecord; message: string }> => 
+    api.post('/testcases', testData),
+  
+  // 获取测试用例列表
+  getList: (params = {}): Promise<{ 
+    success: boolean; 
+    data: { 
+      testCases: TestRecord[]; 
+      pagination: any; 
+      statistics: any 
+    }; 
+    message: string 
+  }> => 
+    api.get('/testcases', { params }),
+  
+  // 获取测试用例详情
+  getDetail: (id: string): Promise<{ success: boolean; data: TestRecord; message: string }> => 
+    api.get(`/testcases/${id}`),
+  
+  // 更新测试用例
+  update: (id: string, testData: Partial<TestForm>): Promise<{ success: boolean; data: TestRecord; message: string }> => 
+    api.put(`/testcases/${id}`, testData),
+  
+  // 删除测试用例
+  delete: (id: string): Promise<{ success: boolean; message: string }> => 
+    api.delete(`/testcases/${id}`),
+  
+  // 更新测试用例状态
+  updateStatus: (id: string, statusData: any): Promise<{ success: boolean; data: TestRecord; message: string }> => 
+    api.patch(`/testcases/${id}/status`, statusData),
+  
+  // 获取统计信息
+  getStatistics: (): Promise<{ success: boolean; data: any; message: string }> => 
+    api.get('/testcases/statistics'),
+  
+  // 执行测试
+  execute: (id: string): Promise<{ success: boolean; data: TestRecord; message: string }> => 
+    api.post(`/testcases/${id}/execute`),
+  
+  // AI分析
+  analyze: (id: string, options: { aiModel: string; testType: string }): Promise<{ success: boolean; data: TestRecord; message: string }> => 
+    api.post(`/testcases/${id}/analyze`, options)
+}
+
 // 通用API
 export const commonAPI = {
   getInfo: (): Promise<AuthResponse> => api.get('/')
 }
 
-export default api 
+export default api

@@ -53,7 +53,7 @@
             {{ errors.description }}
           </p>
           <p class="text-sm text-gray-500">
-            请详细描述测试流程，系统将基于您的描述自动生成测试脚本
+            请描述测试流程（至少5个字符），系统将基于您的描述自动生成测试脚本
           </p>
         </div>
 
@@ -71,7 +71,7 @@
               :loading="testStore.loading"
               :disabled="!isFormValid"
             >
-              开始测试
+              保存
             </BaseButton>
           </div>
         </div>
@@ -179,8 +179,8 @@ const validateEntryUrl = () => {
 const validateDescription = () => {
   if (!form.description) {
     errors.description = '请输入测试内容描述'
-  } else if (form.description.length < 20) {
-    errors.description = '测试描述至少20个字符，请详细描述测试步骤'
+  } else if (form.description.length < 5) {
+    errors.description = '测试描述至少5个字符，请详细描述测试步骤'
   } else if (form.description.length > 2000) {
     errors.description = '测试描述不能超过2000个字符'
   } else {

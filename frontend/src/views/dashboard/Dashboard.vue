@@ -61,7 +61,7 @@
             </div>
             <div class="ml-4">
               <p class="text-sm font-medium text-gray-600">运行中</p>
-              <p class="text-2xl font-bold text-gray-900">{{ testStore.statistics.running }}</p>
+                              <p class="text-2xl font-bold text-gray-900">{{ testStore.statistics.screened }}</p>
             </div>
           </div>
         </div>
@@ -226,7 +226,7 @@ const recentTests = computed(() => {
 const getStatusColor = (status: TestRecord['status']) => {
   const colors = {
     pending: 'bg-gray-400',
-    running: 'bg-yellow-400',
+            screened: 'bg-orange-400',
     completed: 'bg-green-400',
     failed: 'bg-red-400'
   }

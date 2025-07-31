@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { testCaseAPI } from '@/services/api'
 import type { TestRecord, TestForm, TestStatistics, PlaywrightScript } from '@/types'
 
 export const useTestStore = defineStore('test', () => {
@@ -13,12 +14,13 @@ export const useTestStore = defineStore('test', () => {
   const statistics = computed((): TestStatistics => {
     const total = testRecords.value.length
     const pending = testRecords.value.filter(t => t.status === 'pending').length
-    const running = testRecords.value.filter(t => t.status === 'running').length
+    const screened = testRecords.value.filter(t => t.status === 'screened').length
+    const analyzed = testRecords.value.filter(t => t.status === 'analyzed').length
     const completed = testRecords.value.filter(t => t.status === 'completed').length
     const failed = testRecords.value.filter(t => t.status === 'failed').length
     const successRate = total > 0 ? Math.round((completed / total) * 100) : 0
 
-    return { total, pending, running, completed, failed, successRate }
+    return { total, pending, screened, analyzed, completed, failed, successRate }
   })
 
   // 创建测试
@@ -27,31 +29,17 @@ export const useTestStore = defineStore('test', () => {
     error.value = null
     
     try {
-      // 模拟API调用
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      const newTest: TestRecord = {
-        id: Date.now().toString(),
-        title: testData.title,
-        entryUrl: testData.entryUrl,
-        description: testData.description,
-        status: 'pending',
-        createdAt: new Date().toISOString(),
-        playwrightScripts: [],
-        userId: '1' // 从auth store获取
-      }
+      const response = await testCaseAPI.create(testData)
+      const newTest = response.data
       
       testRecords.value.unshift(newTest)
       
-      // 模拟开始执行测试
-      setTimeout(() => {
-        updateTestStatus(newTest.id, 'running')
-        generateMockScripts(newTest.id)
-      }, 2000)
+      // 注意：移除了自动的状态更新，让用户手动控制测试执行
+      // 如果需要自动执行，可以在特定条件下启用
       
       return newTest
-    } catch (err) {
-      error.value = '创建测试失败'
+    } catch (err: any) {
+      error.value = err.message || '创建测试失败'
       throw err
     } finally {
       loading.value = false
@@ -64,16 +52,14 @@ export const useTestStore = defineStore('test', () => {
     error.value = null
     
     try {
-      // 模拟API调用
-      await new Promise(resolve => setTimeout(resolve, 500))
-      
-      // 初始化一些模拟数据
+      const response = await testCaseAPI.getList()
+      testRecords.value = response.data.testCases
+    } catch (err: any) {
+      error.value = err.message || '获取测试记录失败'
+      // 如果API调用失败，使用模拟数据
       if (testRecords.value.length === 0) {
         initMockData()
       }
-    } catch (err) {
-      error.value = '获取测试记录失败'
-      throw err
     } finally {
       loading.value = false
     }
@@ -85,18 +71,18 @@ export const useTestStore = defineStore('test', () => {
     error.value = null
     
     try {
-      // 模拟API调用
-      await new Promise(resolve => setTimeout(resolve, 300))
-      
+      const response = await testCaseAPI.getDetail(id)
+      currentTest.value = response.data
+      return response.data
+    } catch (err: any) {
+      error.value = err.message || '获取测试详情失败'
+      // 如果API调用失败，从本地数据中查找（但不使用模拟数据）
       const test = testRecords.value.find(t => t.id === id)
-      if (!test) {
-        throw new Error('测试记录不存在')
+      if (test && test.id !== '1' && test.id !== '2' && test.id !== '3') {
+        // 只使用真实的测试数据，不使用模拟数据
+        currentTest.value = test
+        return test
       }
-      
-      currentTest.value = test
-      return test
-    } catch (err) {
-      error.value = '获取测试详情失败'
       throw err
     } finally {
       loading.value = false
@@ -109,8 +95,7 @@ export const useTestStore = defineStore('test', () => {
     error.value = null
     
     try {
-      // 模拟API调用
-      await new Promise(resolve => setTimeout(resolve, 500))
+      await testCaseAPI.delete(id)
       
       const index = testRecords.value.findIndex(t => t.id === id)
       if (index > -1) {
@@ -120,8 +105,8 @@ export const useTestStore = defineStore('test', () => {
       if (currentTest.value?.id === id) {
         currentTest.value = null
       }
-    } catch (err) {
-      error.value = '删除测试失败'
+    } catch (err: any) {
+      error.value = err.message || '删除测试失败'
       throw err
     } finally {
       loading.value = false
@@ -129,14 +114,36 @@ export const useTestStore = defineStore('test', () => {
   }
 
   // 更新测试状态
-  const updateTestStatus = (id: string, status: TestRecord['status']) => {
-    const test = testRecords.value.find(t => t.id === id)
-    if (test) {
-      test.status = status
-      test.updatedAt = new Date().toISOString()
-      if (status === 'completed' || status === 'failed') {
-        test.completedAt = new Date().toISOString()
+  const updateTestStatus = async (id: string, status: TestRecord['status'], additionalData?: any) => {
+    try {
+      const statusData = { status, ...additionalData }
+      const response = await testCaseAPI.updateStatus(id, statusData)
+      
+      // 更新本地数据
+      const test = testRecords.value.find(t => t.id === id)
+      if (test) {
+        Object.assign(test, response.data)
       }
+      
+      if (currentTest.value?.id === id) {
+        currentTest.value = response.data
+      }
+      
+      return response.data
+    } catch (err: any) {
+      // 如果API调用失败，仍然更新本地状态
+      const test = testRecords.value.find(t => t.id === id)
+      if (test) {
+        test.status = status
+        test.updatedAt = new Date().toISOString()
+        if (status === 'completed' || status === 'failed') {
+          test.completedAt = new Date().toISOString()
+        }
+        if (additionalData) {
+          Object.assign(test, additionalData)
+        }
+      }
+      console.warn('更新测试状态API调用失败，使用本地更新:', err)
     }
   }
 
@@ -204,10 +211,8 @@ export const useTestStore = defineStore('test', () => {
     test.videoUrl = `/mock-video/${testId}-full.mp4`
     test.duration = 15000
 
-    // 模拟执行完成
-    setTimeout(() => {
-      updateTestStatus(testId, 'completed')
-    }, 3000)
+    // 注意：移除了自动的状态更新，让用户手动控制测试执行
+    // 如果需要自动执行，可以在特定条件下启用
   }
 
   // 初始化模拟数据
@@ -218,12 +223,9 @@ export const useTestStore = defineStore('test', () => {
         title: '用户登录功能测试',
         entryUrl: 'https://example.com/login',
         description: '测试用户登录流程，包括邮箱验证、密码验证和登录状态检查',
-        status: 'completed',
+        status: 'pending',
         createdAt: '2025-01-13T10:30:00Z',
-        completedAt: '2025-01-13T10:32:15Z',
         playwrightScripts: [],
-        videoUrl: '/mock-video/1-full.mp4',
-        duration: 135000,
         userId: '1'
       },
       {
@@ -231,9 +233,8 @@ export const useTestStore = defineStore('test', () => {
         title: '商品搜索功能测试',
         entryUrl: 'https://example.com/products',
         description: '测试商品搜索、筛选和排序功能',
-        status: 'failed',
+        status: 'pending',
         createdAt: '2025-01-13T14:20:00Z',
-        completedAt: '2025-01-13T14:21:30Z',
         playwrightScripts: [],
         userId: '1'
       },
@@ -242,7 +243,7 @@ export const useTestStore = defineStore('test', () => {
         title: '购物车操作测试',
         entryUrl: 'https://example.com/cart',
         description: '测试添加商品到购物车、修改数量、删除商品等操作',
-        status: 'running',
+        status: 'pending',
         createdAt: '2025-01-14T09:15:00Z',
         playwrightScripts: [],
         userId: '1'
@@ -250,6 +251,87 @@ export const useTestStore = defineStore('test', () => {
     ]
     
     testRecords.value = mockTests
+  }
+
+  // 更新测试用例
+  const updateTest = async (id: string, testData: Partial<TestForm>) => {
+    loading.value = true
+    error.value = null
+    
+    try {
+      const response = await testCaseAPI.update(id, testData)
+      
+      // 更新本地数据
+      const index = testRecords.value.findIndex(t => t.id === id)
+      if (index > -1) {
+        testRecords.value[index] = response.data
+      }
+      
+      if (currentTest.value?.id === id) {
+        currentTest.value = response.data
+      }
+      
+      return response.data
+    } catch (err: any) {
+      error.value = err.message || '更新测试失败'
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // 执行测试
+  const executeTest = async (id: string) => {
+    loading.value = true
+    error.value = null
+    
+    try {
+      const response = await testCaseAPI.execute(id)
+      
+      // 更新本地数据
+      const index = testRecords.value.findIndex(t => t.id === id)
+      if (index > -1) {
+        testRecords.value[index] = response.data
+      }
+      
+      if (currentTest.value?.id === id) {
+        currentTest.value = response.data
+      }
+      
+      return response.data
+    } catch (err: any) {
+      error.value = err.message || '执行测试失败'
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // AI分析
+  const analyzeTest = async (id: string, options: { aiModel: string; testType: string }) => {
+    loading.value = true
+    error.value = null
+    
+    try {
+      const response = await testCaseAPI.analyze(id, options)
+      
+      // 更新本地数据
+      const index = testRecords.value.findIndex(t => t.id === id)
+      if (index > -1) {
+        testRecords.value[index] = response.data
+      }
+      
+      if (currentTest.value?.id === id) {
+        currentTest.value = response.data
+      }
+      
+      return response.data
+    } catch (err: any) {
+      error.value = err.message || 'AI分析失败'
+      throw err
+    } finally {
+      loading.value = false
+    }
   }
 
   // 清除错误
@@ -271,8 +353,11 @@ export const useTestStore = defineStore('test', () => {
     createTest,
     getTestRecords,
     getTestDetail,
+    updateTest,
     deleteTest,
     updateTestStatus,
+    executeTest,
+    analyzeTest,
     clearError
   }
-}) 
+})

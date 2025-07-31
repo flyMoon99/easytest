@@ -109,8 +109,8 @@
         <div class="mt-6 p-4 bg-blue-50 rounded-lg">
           <h4 class="text-sm font-medium text-blue-800 mb-2">演示账户</h4>
           <p class="text-sm text-blue-700">
-            邮箱: <span class="font-mono">test@example.com</span><br>
-            密码: <span class="font-mono">Test123!</span>
+            邮箱: <span class="font-mono">test@foryou56.com</span><br>
+            密码: <span class="font-mono">test@123</span>
           </p>
         </div>
       </BaseCard>

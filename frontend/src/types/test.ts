@@ -11,6 +11,18 @@ export interface TestRecord {
   videoUrl?: string
   duration?: number
   userId: string
+  screenshotUrl?: string
+  result?: {
+    success: boolean
+    message: string
+    errorDetails: string
+  }
+  aiAnalysis?: {
+    analysis: string
+    aiModel: string
+    testType: string
+    analyzedAt: string
+  }
 }
 
 export interface PlaywrightScript {
@@ -21,6 +33,7 @@ export interface PlaywrightScript {
   selector?: string
   value?: string
   description?: string
+  explanation?: string
   videoSegmentUrl?: string
   timestamp?: number
   screenshot?: string
@@ -35,13 +48,14 @@ export interface TestForm {
 export interface TestStatistics {
   total: number
   pending: number
-  running: number
+  screened: number
+  analyzed: number
   completed: number
   failed: number
   successRate: number
 }
 
-export type TestStatus = 'pending' | 'running' | 'completed' | 'failed'
+export type TestStatus = 'pending' | 'screened' | 'analyzed' | 'completed' | 'failed'
 
 export interface TestState {
   testRecords: TestRecord[]
@@ -49,4 +63,4 @@ export interface TestState {
   statistics: TestStatistics
   loading: boolean
   error: string | null
-} 
+}
