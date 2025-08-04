@@ -35,10 +35,23 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// 请求限制
+// 登录接口特殊限制
+const loginLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000, // 5分钟
+  max: 20, // 5分钟内最多20次登录尝试
+  message: {
+    success: false,
+    message: '登录尝试过于频繁，请稍后再试',
+    timestamp: new Date().toISOString()
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// 全局请求限制
 const limiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15分钟
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100, // 限制每个IP 15分钟内最多100个请求
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 5 * 60 * 1000, // 5分钟
+  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 500, // 限制每个IP 5分钟内最多500个请求
   message: {
     success: false,
     message: '请求过于频繁，请稍后再试',
@@ -48,7 +61,12 @@ const limiter = rateLimit({
   legacyHeaders: false,
 });
 
-app.use('/api/', limiter);
+// 请求限制（仅在生产环境中启用）
+if (process.env.NODE_ENV === 'production') {
+  app.use('/api/', limiter);
+} else {
+  console.log('开发环境：已禁用请求频率限制');
+}
 
 // 日志中间件
 if (process.env.NODE_ENV === 'development') {
@@ -90,6 +108,7 @@ app.use('/videos', cors({
 }, express.static('public/uploads/videos'));
 
 // API路由
+app.use('/api/auth/login', loginLimiter); // 登录接口特殊限制
 app.use('/api', routes);
 
 // 404处理
