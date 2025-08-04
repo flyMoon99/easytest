@@ -255,21 +255,29 @@ export const getPromptTemplate = (aiModel, testType) => {
  */
 const GEMINI_VIDEO_PROMPTS = {
   // 端到端测试专家视频分析
-  e2e_testing_analysis: `你是一个专业的端到端测试专家。请分析这个视频内容，从测试专家的角度识别视频流程中的bug和改善建议。
-视频名称：{videoName}
+  e2e_testing_analysis: `你是一个专业的端到端测试专家。请分析这个视频内容，结合测试说明，从测试专家的角度识别视频流程中的bug和改善建议。
 
-请从以下角度进行分析：
+视频名称：{videoName}
+测试说明：{testDescription}
+
+请根据测试说明的要求，从以下角度进行分析：
 
 1. **功能测试角度**：
-- 识别视频中展示的功能是否正常工作，如不能返回结果、无响应、报错等类似都为bug比较严重,设置为high
+- 根据测试说明中的功能要求，识别视频中展示的功能是否正常工作
+- 重点关注测试说明中提到的具体功能点
+- 识别功能缺陷（如不能返回结果、无响应、报错等），严重问题设置为high
 - 用户体验流程的完整性或者优化则为medium或者low
-
-
 
 2. **界面测试角度**：
 - 分析界面元素的布局和设计
 - 识别UI/UX问题（如按钮位置、颜色对比、字体大小等）
 - 评估界面的响应性和交互性
+- 根据测试说明中的界面要求进行评估
+
+3. **测试说明专项分析**：
+- 重点关注测试说明中提到的特定测试点
+- 验证是否符合测试说明中的预期结果
+- 识别与测试说明不符的行为或问题
 
 请严格按照以下JSON格式返回分析结果：
 
@@ -281,7 +289,8 @@ const GEMINI_VIDEO_PROMPTS = {
         "issue": "问题描述",
         "severity": "high|medium|low",
         "impact": "影响说明",
-        "recommendation": "改进建议"
+        "recommendation": "改进建议",
+        "relatedToTestDescription": "是否与测试说明相关"
       }
     ],
     "uiIssues": [
@@ -289,19 +298,26 @@ const GEMINI_VIDEO_PROMPTS = {
         "issue": "UI问题描述",
         "severity": "high|medium|low",
         "impact": "用户体验影响",
-        "recommendation": "设计改进建议"
+        "recommendation": "设计改进建议",
+        "relatedToTestDescription": "是否与测试说明相关"
       }
     ]
-  }
-  
+  },
   "testRecommendations": [
     {
       "testType": "功能测试|UI测试",
       "priority": "high|medium|low",
       "description": "具体测试建议",
-      "expectedOutcome": "预期测试结果"
+      "expectedOutcome": "预期测试结果",
+      "basedOnTestDescription": "是否基于测试说明"
     }
-  ]
+  ],
+  "testDescriptionCompliance": {
+    "coveredPoints": ["已覆盖的测试点"],
+    "missingPoints": ["未覆盖的测试点"],
+    "complianceScore": "符合度评分(0-100)",
+    "suggestions": ["改进建议"]
+  }
 }
 
 注意：
@@ -309,16 +325,18 @@ const GEMINI_VIDEO_PROMPTS = {
 2. 不要添加任何markdown标记
 3. 不要添加任何额外的说明文字
 4. 确保JSON格式完全正确
-5. 根据视频内容提供具体的问题描述和建议`
+5. 根据测试说明和视频内容提供具体的问题描述和建议
+6. 重点关注测试说明中提到的具体要求`
 };
 
 /**
  * 获取Gemini视频分析提示词
  * @param {string} videoName - 视频名称
+ * @param {string} testDescription - 测试说明
  * @param {string} analysisType - 分析类型（默认为e2e_testing_analysis）
  * @returns {string} 格式化后的提示词
  */
-export const getGeminiVideoPrompt = (videoName, analysisType = 'e2e_testing_analysis') => {
+export const getGeminiVideoPrompt = (videoName, testDescription = '', analysisType = 'e2e_testing_analysis') => {
   const template = GEMINI_VIDEO_PROMPTS[analysisType];
   
   if (!template) {
@@ -326,7 +344,9 @@ export const getGeminiVideoPrompt = (videoName, analysisType = 'e2e_testing_anal
   }
   
   // 替换模板中的变量
-  return template.replace('{videoName}', videoName);
+  return template
+    .replace('{videoName}', videoName)
+    .replace('{testDescription}', testDescription || '无具体测试说明');
 };
 
 /**

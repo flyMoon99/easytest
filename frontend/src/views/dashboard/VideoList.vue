@@ -216,6 +216,9 @@
                   <p v-if="video?.parseResult?.duration" class="text-xs text-gray-400">
                     时长: {{ formatDuration(video.parseResult.duration) }}
                   </p>
+                  <p v-if="video?.testDescription" class="text-xs text-gray-600 mt-1 bg-gray-50 p-2 rounded">
+                    <span class="font-medium">测试说明:</span> {{ video.testDescription }}
+                  </p>
                 </div>
               </div>
 

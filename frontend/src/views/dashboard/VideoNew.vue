@@ -30,6 +30,27 @@
           </p>
         </div>
 
+        <!-- 测试说明 -->
+        <div>
+          <label for="testDescription" class="block text-sm font-medium text-gray-700 mb-2">
+            测试说明
+          </label>
+          <textarea
+            id="testDescription"
+            v-model="form.testDescription"
+            rows="4"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+            placeholder="请描述视频测试的目的、重点关注的测试点、预期结果等..."
+            :class="{ 'border-red-300 focus:border-red-500 focus:ring-red-500': errors.testDescription }"
+            @blur="validateTestDescription"
+            @input="validateTestDescription"
+          ></textarea>
+          <p class="text-sm text-gray-500 mt-1">
+            详细描述测试目标，帮助AI更精准地识别视频中的问题和改进点
+          </p>
+          <p v-if="errors.testDescription" class="text-sm text-red-600 mt-1">{{ errors.testDescription }}</p>
+        </div>
+
         <!-- 视频文件 -->
         <div>
           <label for="video" class="block text-sm font-medium text-gray-700 mb-2">
@@ -117,19 +138,21 @@ const router = useRouter()
 const videoStore = useVideoStore()
 
 const form = reactive({
-  name: ''
+  name: '',
+  testDescription: ''
 })
 
 const errors = reactive({
   name: '',
-  video: ''
+  video: '',
+  testDescription: ''
 })
 
 const selectedFile = ref<File | null>(null)
 const fileInput = ref<HTMLInputElement>()
 
 const isFormValid = computed(() => {
-  return form.name && selectedFile.value && !errors.name && !errors.video
+  return form.name && selectedFile.value && !errors.name && !errors.video && !errors.testDescription
 })
 
 const validateName = () => {
@@ -141,6 +164,18 @@ const validateName = () => {
     errors.name = '视频名称不能超过200个字符'
   } else {
     errors.name = ''
+  }
+}
+
+const validateTestDescription = () => {
+  if (!form.testDescription) {
+    errors.testDescription = '请输入测试说明'
+  } else if (form.testDescription.length < 10) {
+    errors.testDescription = '测试说明至少10个字符'
+  } else if (form.testDescription.length > 500) {
+    errors.testDescription = '测试说明不能超过500个字符'
+  } else {
+    errors.testDescription = ''
   }
 }
 
@@ -224,6 +259,7 @@ const formatFileSize = (bytes: number): string => {
 
 const handleSubmit = async () => {
   validateName()
+  validateTestDescription()
   validateFile()
   
   if (!isFormValid.value) return
@@ -231,6 +267,7 @@ const handleSubmit = async () => {
   try {
     const formData = new FormData()
     formData.append('name', form.name)
+    formData.append('testDescription', form.testDescription)
     formData.append('video', selectedFile.value!)
 
     const newVideo = await videoStore.uploadVideo(formData)
@@ -245,9 +282,11 @@ const handleSubmit = async () => {
 
 const handleReset = () => {
   form.name = ''
+  form.testDescription = ''
   selectedFile.value = null
   errors.name = ''
   errors.video = ''
+  errors.testDescription = ''
   if (fileInput.value) {
     fileInput.value.value = ''
   }

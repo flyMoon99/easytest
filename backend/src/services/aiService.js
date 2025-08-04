@@ -438,9 +438,10 @@ export const testGeminiConnection = async (text = "Hello, how are you?") => {
  * @param {string} videoId - 视频ID
  * @returns {Promise<{success: boolean, analysis?: Object, rawResponse?: string, error?: string}>}
  */
-export const analyzeVideoWithGemini = async (videoPath, videoName, memberId = null, videoId = null) => {
+export const analyzeVideoWithGemini = async (videoPath, videoName, memberId = null, videoId = null, testDescription = '') => {
   try {
     console.log(`开始使用Gemini分析视频: ${videoName}`);
+    console.log(`测试说明: ${testDescription || '无'}`);
     
     // 将视频路径转换为绝对路径
     let fullVideoPath;
@@ -474,8 +475,8 @@ export const analyzeVideoWithGemini = async (videoPath, videoName, memberId = nu
     const mimeType = getVideoMimeType(fullVideoPath);
     console.log(`使用MIME类型: ${mimeType} 处理文件: ${fullVideoPath}`);
     
-    // 获取提示词
-    const prompt = getGeminiVideoPrompt(videoName);
+    // 获取提示词（包含测试说明）
+    const prompt = getGeminiVideoPrompt(videoName, testDescription);
     
     // 创建模型实例
     const model = genAI.getGenerativeModel({ model: aiConfig.gemini.model });

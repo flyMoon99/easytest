@@ -73,6 +73,11 @@ const createVideoSchema = Joi.object({
     'string.min': '视频名称至少1个字符',
     'string.max': '视频名称最多200个字符',
     'any.required': '视频名称是必填项'
+  }),
+  testDescription: Joi.string().min(10).max(500).required().messages({
+    'string.min': '测试说明至少10个字符',
+    'string.max': '测试说明最多500个字符',
+    'any.required': '测试说明是必填项'
   })
 });
 
@@ -99,7 +104,7 @@ router.post('/upload', authenticateToken, upload.single('video'), async (req, re
       return errorResponse(res, error.details[0].message, 400);
     }
 
-    const { name } = value;
+    const { name, testDescription } = value;
 
     // 处理MIME类型 - Chrome不支持video/quicktime，统一使用video/mp4
     let mimeType = req.file.mimetype;
@@ -111,6 +116,7 @@ router.post('/upload', authenticateToken, upload.single('video'), async (req, re
     const video = new Video({
       memberId: req.user._id,
       name: name || req.file.originalname,
+      testDescription: testDescription,
       originalName: req.file.originalname,
       fileSize: req.file.size,
       filePath: req.file.path,
@@ -417,7 +423,7 @@ router.post('/:id/parse-with-gemini', authenticateToken, async (req, res) => {
       const { analyzeVideoWithGemini } = await import('../services/aiService.js');
       
       // 调用Gemini分析
-      const analysisResult = await analyzeVideoWithGemini(video.filePath, video.name, req.user._id, video._id);
+      const analysisResult = await analyzeVideoWithGemini(video.filePath, video.name, req.user._id, video._id, video.testDescription);
       
       if (analysisResult.success) {
         // 确保分析结果符合MongoDB模型要求

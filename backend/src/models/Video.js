@@ -18,6 +18,15 @@ const videoSchema = new mongoose.Schema({
     maxlength: [200, '视频名称最多200个字符']
   },
   
+  // 测试说明
+  testDescription: {
+    type: String,
+    required: [true, '测试说明是必填项'],
+    trim: true,
+    minlength: [10, '测试说明至少10个字符'],
+    maxlength: [500, '测试说明最多500个字符']
+  },
+  
   // 文件信息
   originalName: {
     type: String,

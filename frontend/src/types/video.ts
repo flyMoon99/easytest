@@ -67,6 +67,7 @@ export interface VideoParseResult {
 export interface VideoRecord {
   id: string
   name: string
+  testDescription: string
   originalName: string
   fileSize: number
   filePath: string
@@ -83,6 +84,7 @@ export interface VideoRecord {
 // 视频表单
 export interface VideoForm {
   name: string
+  testDescription: string
   video: File | null
 }
 
