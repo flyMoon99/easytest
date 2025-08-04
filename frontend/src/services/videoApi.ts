@@ -68,10 +68,14 @@ export const videoAPI = {
     onComplete?: () => void
   ): Promise<void> => {
     try {
-      const token = localStorage.getItem('token')
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token')
       const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001'
       
-      const response = await fetch(`${baseURL}/api/videos/${id}/parse-stream`, {
+      if (!token) {
+        throw new Error('未找到认证令牌，请重新登录')
+      }
+      
+      let response = await fetch(`${baseURL}/api/videos/${id}/parse-stream`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -79,7 +83,43 @@ export const videoAPI = {
         }
       })
 
+      // 如果是401错误，尝试刷新token并重试
+      if (response.status === 401) {
+        try {
+          const refreshResponse = await fetch(`${baseURL}/api/auth/refresh`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          })
+          
+          if (refreshResponse.ok) {
+            const refreshData = await refreshResponse.json()
+            const newToken = refreshData.data.token
+            
+            // 更新存储的token
+            const storage = localStorage.getItem('token') ? localStorage : sessionStorage
+            storage.setItem('token', newToken)
+            
+            // 重新发送请求
+            response = await fetch(`${baseURL}/api/videos/${id}/parse-stream`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${newToken}`,
+                'Content-Type': 'application/json'
+              }
+            })
+          }
+        } catch (refreshError) {
+          console.error('Token refresh failed:', refreshError)
+        }
+      }
+
       if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('认证失败，请重新登录')
+        }
         throw new Error(`HTTP error! status: ${response.status}`)
       }
 
@@ -132,4 +172,4 @@ export const videoAPI = {
     const response = await api.get('/videos/statistics')
     return response.data
   }
-} 
+}

@@ -24,7 +24,11 @@ build/
 .env.development.local
 .env.test.local
 .env.production.local
-*/env.example
+.env.example
+backend/.env
+backend/.env.*
+frontend/.env
+frontend/.env.*
 
 # Coverage reports
 coverage/
@@ -181,3 +185,9 @@ frontend/.env
 .Trashes
 ehthumbs.db
 Thumbs.db 
+
+# 忽略上传附件
+backend/public/uploads/
+backend/public/uploads/*
+backend/public/screenshots/
+backend/public/screenshots/*

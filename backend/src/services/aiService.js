@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { aiConfig } from '../config/ai.js';
 import { getPrompt, getGeminiVideoPrompt } from './promptService.js';
+import { createTestResultsFromGeminiAnalysis } from './testResultService.js';
 
 // 获取当前文件的目录路径（ES模块兼容）
 const __filename = fileURLToPath(import.meta.url);
@@ -433,9 +434,11 @@ export const testGeminiConnection = async (text = "Hello, how are you?") => {
  * Gemini 2.0 Flash视频内容分析（使用官方库）
  * @param {string} videoPath - 视频文件路径
  * @param {string} videoName - 视频名称
+ * @param {string} memberId - 会员ID
+ * @param {string} videoId - 视频ID
  * @returns {Promise<{success: boolean, analysis?: Object, rawResponse?: string, error?: string}>}
  */
-export const analyzeVideoWithGemini = async (videoPath, videoName) => {
+export const analyzeVideoWithGemini = async (videoPath, videoName, memberId = null, videoId = null) => {
   try {
     console.log(`开始使用Gemini分析视频: ${videoName}`);
     
@@ -494,22 +497,46 @@ export const analyzeVideoWithGemini = async (videoPath, videoName) => {
       // 尝试解析JSON响应
       let analysis;
       let isJsonResponse = false;
+      let cleanedAnalysisText = analysisText;
+      
       try {
         analysis = JSON.parse(analysisText);
         console.log('成功解析JSON响应');
         isJsonResponse = true;
       } catch (parseError) {
-        console.log('JSON解析失败，创建默认分析结果:', parseError.message);
-        analysis = createDefaultGeminiAnalysis(videoName, 'AI返回的内容不是有效的JSON格式');
+        console.log('直接JSON解析失败，尝试清理markdown标记:', parseError.message);
+        
+        // 尝试清理markdown代码块标记
+        try {
+          cleanedAnalysisText = analysisText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+          analysis = JSON.parse(cleanedAnalysisText);
+          console.log('清理markdown后成功解析JSON响应');
+          isJsonResponse = true;
+        } catch (secondParseError) {
+          console.log('清理后仍然解析失败，创建默认分析结果:', secondParseError.message);
+          analysis = createDefaultGeminiAnalysis(videoName, 'AI返回的内容不是有效的JSON格式');
+          cleanedAnalysisText = analysisText; // 保持原始内容
+        }
       }
       
       // 确保分析结果符合MongoDB模型要求
       const validatedAnalysis = validateAndFixAnalysis(analysis, videoName);
       
+      // 如果提供了memberId和videoId，创建TestResult记录
+      if (memberId && videoId) {
+        try {
+          await createTestResultsFromGeminiAnalysis(memberId, videoId, validatedAnalysis);
+          console.log('成功创建测试结果记录');
+        } catch (testResultError) {
+          console.error('创建测试结果记录失败:', testResultError);
+        }
+      }
+      
       return {
         success: true,
         analysis: validatedAnalysis,
         rawResponse: analysisText,
+        cleanedResponse: isJsonResponse ? cleanedAnalysisText : analysisText,
         isJsonResponse: isJsonResponse
       };
       
@@ -529,6 +556,16 @@ export const analyzeVideoWithGemini = async (videoPath, videoName) => {
         // 创建基于文本的分析结果
         const analysis = createDefaultGeminiAnalysis(videoName, '基于文本分析模式');
         
+        // 如果提供了memberId和videoId，创建TestResult记录
+        if (memberId && videoId) {
+          try {
+            await createTestResultsFromGeminiAnalysis(memberId, videoId, analysis);
+            console.log('成功创建测试结果记录（文本分析模式）');
+          } catch (testResultError) {
+            console.error('创建测试结果记录失败:', testResultError);
+          }
+        }
+        
         return {
           success: true,
           analysis: analysis,
@@ -539,9 +576,21 @@ export const analyzeVideoWithGemini = async (videoPath, videoName) => {
         console.log('文本分析也失败了:', textError.message);
         
         // 返回默认分析结果
+        const defaultAnalysis = createDefaultGeminiAnalysis(videoName, '所有分析模式都失败了');
+        
+        // 如果提供了memberId和videoId，创建TestResult记录
+        if (memberId && videoId) {
+          try {
+            await createTestResultsFromGeminiAnalysis(memberId, videoId, defaultAnalysis);
+            console.log('成功创建测试结果记录（默认模式）');
+          } catch (testResultError) {
+            console.error('创建测试结果记录失败:', testResultError);
+          }
+        }
+        
         return {
           success: true,
-          analysis: createDefaultGeminiAnalysis(videoName, '所有分析模式都失败了'),
+          analysis: defaultAnalysis,
           rawResponse: '所有分析模式都失败了',
           isJsonResponse: false
         };
@@ -552,9 +601,21 @@ export const analyzeVideoWithGemini = async (videoPath, videoName) => {
     console.error('Gemini视频分析失败:', error);
     
     // 返回默认分析结果而不是抛出错误
+    const errorAnalysis = createDefaultGeminiAnalysis(videoName, `分析失败: ${error.message}`);
+    
+    // 如果提供了memberId和videoId，创建TestResult记录
+    if (memberId && videoId) {
+      try {
+        await createTestResultsFromGeminiAnalysis(memberId, videoId, errorAnalysis);
+        console.log('成功创建测试结果记录（错误模式）');
+      } catch (testResultError) {
+        console.error('创建测试结果记录失败:', testResultError);
+      }
+    }
+    
     return {
       success: true,
-      analysis: createDefaultGeminiAnalysis(videoName, `分析失败: ${error.message}`),
+      analysis: errorAnalysis,
       rawResponse: `分析失败: ${error.message}`,
       isJsonResponse: false
     };

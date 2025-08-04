@@ -97,23 +97,24 @@
           </svg>
           视频列表
         </router-link>
+
+        <router-link
+          to="/dashboard/test-results"
+          :class="[
+            'flex items-center px-6 py-2 text-sm rounded-lg transition-colors ml-8',
+            $route.name === 'test-results'
+              ? 'bg-primary-50 text-primary-700'
+              : 'text-gray-600 hover:bg-gray-50'
+          ]"
+        >
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+          测试结果
+        </router-link>
       </div>
 
-      <!-- 报告分析 -->
-      <router-link
-        to="/dashboard/reports"
-        :class="[
-          'flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors',
-          $route.name === 'reports'
-            ? 'bg-primary-50 text-primary-700 border-r-2 border-primary-600'
-            : 'text-gray-700 hover:bg-gray-50'
-        ]"
-      >
-        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-        </svg>
-        测试报告
-      </router-link>
+
 
       <!-- AI对话 -->
       <router-link

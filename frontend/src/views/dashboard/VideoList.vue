@@ -228,6 +228,13 @@
                   播放
                 </button>
                 <button
+                  v-if="video?.parseStatus === 'completed' && video?.parseResult?.geminiText"
+                  @click="handleShowParseResult(video)"
+                  class="text-sm text-purple-600 hover:text-purple-500"
+                >
+                  解析结果
+                </button>
+                <button
                   v-if="video?.parseStatus === 'pending'"
                   @click="handleParseWithGeminiStream(video?.id, video?.name)"
                   class="text-sm text-green-600 hover:text-green-500"
@@ -276,6 +283,15 @@
     @close="handleCloseParseModal"
     @retry="handleRetryParseStream"
   />
+
+  <!-- 解析结果弹窗 -->
+  <BaseParseResultModal
+    :visible="showParseResultModal"
+    :video-name="currentParseResultVideoName"
+    :gemini-text="currentParseResultGeminiText"
+    :parsed-at="currentParseResultParsedAt"
+    @close="handleCloseParseResultModal"
+  />
 </template>
 
 <script setup lang="ts">
@@ -284,6 +300,7 @@ import { useVideoStore } from '@/stores/video'
 import type { VideoRecord } from '@/types/video'
 import BaseVideoPlayer from '@/components/base/BaseVideoPlayer.vue'
 import BaseParseModal from '@/components/base/BaseParseModal.vue'
+import BaseParseResultModal from '@/components/base/BaseParseResultModal.vue'
 
 const videoStore = useVideoStore()
 
@@ -306,6 +323,12 @@ const showParseModal = ref(false)
 const currentParseVideoName = ref('')
 const currentParseVideoId = ref('')
 const parseModalRef = ref()
+
+// 解析结果弹窗相关状态
+const showParseResultModal = ref(false)
+const currentParseResultVideoName = ref('')
+const currentParseResultGeminiText = ref('')
+const currentParseResultParsedAt = ref('')
 
 // 获取状态样式
 const getStatusStyle = (status: VideoRecord['parseStatus']) => {
@@ -440,10 +463,19 @@ const handleParseWithGeminiStream = async (videoId: string, videoName: string) =
       // 错误回调
       (error) => {
         if (parseModalRef.value) {
-          parseModalRef.value.addLog(`解析失败: ${error}`, 'error')
+          let errorMessage = `解析失败: ${error}`
+                  if (typeof error === 'object' && error && 'message' in error && typeof error.message === 'string' && error.message.includes('认证失败')) {
+          errorMessage = '认证失败，请刷新页面重新登录'
+        }
+          parseModalRef.value.addLog(errorMessage, 'error')
           parseModalRef.value.updateStatus('failed')
         }
         console.error('Gemini流式解析失败:', error)
+        
+        // 如果是认证错误，提示用户
+        if (typeof error === 'object' && error && 'message' in error && typeof error.message === 'string' && error.message.includes('认证失败')) {
+          alert('认证失败，请刷新页面重新登录')
+        }
       },
       // 原始响应回调
       (response) => {
@@ -477,6 +509,27 @@ const handleCloseParseModal = () => {
   currentParseVideoId.value = ''
   currentParseVideoName.value = ''
   videoStore.clearStreamState()
+}
+
+// 显示解析结果弹窗
+const handleShowParseResult = (video: VideoRecord) => {
+  if (!video) {
+    console.error('Video is undefined')
+    return
+  }
+  
+  currentParseResultVideoName.value = video.name || '未知视频'
+  currentParseResultGeminiText.value = video.parseResult?.geminiText || ''
+  currentParseResultParsedAt.value = video.parsedAt || ''
+  showParseResultModal.value = true
+}
+
+// 关闭解析结果弹窗
+const handleCloseParseResultModal = () => {
+  showParseResultModal.value = false
+  currentParseResultVideoName.value = ''
+  currentParseResultGeminiText.value = ''
+  currentParseResultParsedAt.value = ''
 }
 
 // 播放视频

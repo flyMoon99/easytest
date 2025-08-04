@@ -3,6 +3,7 @@ import authRoutes from './auth.js';
 import testCaseRoutes from './testCase.js';
 import videoRoutes from './video.js';
 import aiChatRoutes from './aiChat.js';
+import testResultRoutes from './testResult.js';
 import { successResponse } from '../utils/response.js';
 
 const router = express.Router();
@@ -33,6 +34,7 @@ router.get('/', (req, res) => {
       auth: '/api/auth',
       testcases: '/api/testcases',
       videos: '/api/videos',
+      'test-results': '/api/test-results',
       health: '/api/health'
     },
     documentation: 'API文档待完善'
@@ -50,5 +52,8 @@ router.use('/videos', videoRoutes);
 
 // AI对话路由
 router.use('/ai-chat', aiChatRoutes);
+
+// 测试结果路由
+router.use('/test-results', testResultRoutes);
 
 export default router;

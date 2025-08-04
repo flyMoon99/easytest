@@ -65,6 +65,12 @@ const router = createRouter({
           meta: { title: '视频列表 - 易测平台' }
         },
         {
+          path: 'test-results',
+          name: 'test-results',
+          component: () => import('@/views/dashboard/TestResults.vue'),
+          meta: { title: '测试结果 - 易测平台' }
+        },
+        {
           path: 'ai-chat',
           name: 'ai-chat',
           component: () => import('@/views/dashboard/AiChat.vue'),

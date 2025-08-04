@@ -417,13 +417,13 @@ router.post('/:id/parse-with-gemini', authenticateToken, async (req, res) => {
       const { analyzeVideoWithGemini } = await import('../services/aiService.js');
       
       // 调用Gemini分析
-      const analysisResult = await analyzeVideoWithGemini(video.filePath, video.name);
+      const analysisResult = await analyzeVideoWithGemini(video.filePath, video.name, req.user._id, video._id);
       
       if (analysisResult.success) {
         // 确保分析结果符合MongoDB模型要求
         const validatedAnalysis = analysisResult.analysis;
         
-        // 更新解析结果
+        // 更新解析结果 - 使用新的简化结构
         const updateData = {
           parseStatus: 'completed',
           parseResult: {
@@ -436,7 +436,7 @@ router.post('/:id/parse-with-gemini', authenticateToken, async (req, res) => {
               height: 0
             },
             frameRate: 0, // 暂时设为0，后续可以添加帧率检测
-            geminiAnalysis: validatedAnalysis
+            geminiText: analysisResult.cleanedResponse || analysisResult.rawResponse || 'Gemini分析完成'
           }
         };
         
@@ -466,24 +466,7 @@ router.post('/:id/parse-with-gemini', authenticateToken, async (req, res) => {
             height: 0
           },
           frameRate: 0,
-          geminiAnalysis: {
-            summary: '分析失败',
-            testAnalysis: {
-              functionalIssues: [],
-              uiIssues: [],
-              performanceIssues: [],
-              compatibilityIssues: [],
-              securityIssues: []
-            },
-            overallAssessment: {
-              qualityScore: 0,
-              criticalIssues: 0,
-              majorIssues: 0,
-              minorIssues: 0,
-              recommendations: []
-            },
-            testRecommendations: []
-          }
+          geminiText: '分析失败'
         }
       };
       
@@ -602,7 +585,7 @@ router.post('/:id/parse-stream', authenticateToken, async (req, res) => {
       })}\n\n`);
 
       // 调用Gemini分析
-      const analysisResult = await analyzeVideoWithGemini(video.filePath, video.name);
+      const analysisResult = await analyzeVideoWithGemini(video.filePath, video.name, req.user._id, video._id);
       
       // 发送分析完成消息
       res.write(`data: ${JSON.stringify({
@@ -637,7 +620,7 @@ router.post('/:id/parse-stream', authenticateToken, async (req, res) => {
         // 确保分析结果符合MongoDB模型要求
         const validatedAnalysis = analysisResult.analysis;
         
-        // 更新解析结果
+        // 更新解析结果 - 使用新的简化结构
         const updateData = {
           parseStatus: 'completed',
           parseResult: {
@@ -650,7 +633,7 @@ router.post('/:id/parse-stream', authenticateToken, async (req, res) => {
               height: 0
             },
             frameRate: 0, // 暂时设为0，后续可以添加帧率检测
-            geminiAnalysis: validatedAnalysis
+            geminiText: analysisResult.cleanedResponse || analysisResult.rawResponse || 'Gemini分析完成'
           }
         };
         
@@ -706,24 +689,7 @@ router.post('/:id/parse-stream', authenticateToken, async (req, res) => {
             height: 0
           },
           frameRate: 0,
-          geminiAnalysis: {
-            summary: '分析失败',
-            testAnalysis: {
-              functionalIssues: [],
-              uiIssues: [],
-              performanceIssues: [],
-              compatibilityIssues: [],
-              securityIssues: []
-            },
-            overallAssessment: {
-              qualityScore: 0,
-              criticalIssues: 0,
-              majorIssues: 0,
-              minorIssues: 0,
-              recommendations: []
-            },
-            testRecommendations: []
-          }
+          geminiText: '分析失败'
         }
       };
       

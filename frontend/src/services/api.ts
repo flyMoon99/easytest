@@ -31,15 +31,34 @@ api.interceptors.response.use(
   (response: AxiosResponse) => {
     return response.data
   },
-  (error) => {
-    if (error.response?.status === 401) {
-      // 令牌过期，清除本地存储并跳转到登录页
-      localStorage.removeItem('token')
-      sessionStorage.removeItem('token')
-      localStorage.removeItem('user')
-      sessionStorage.removeItem('user')
-      window.location.href = '/login'
+  async (error) => {
+    const originalRequest = error.config
+    
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true
+      
+      try {
+        // 尝试刷新令牌
+        const refreshResponse = await api.post('/auth/refresh')
+        const newToken = refreshResponse.data.token
+        
+        // 更新存储的令牌
+        const storage = localStorage.getItem('token') ? localStorage : sessionStorage
+        storage.setItem('token', newToken)
+        
+        // 重新发送原始请求
+        originalRequest.headers.Authorization = `Bearer ${newToken}`
+        return api(originalRequest)
+      } catch (refreshError) {
+        // 刷新失败，清除本地存储并跳转到登录页
+        localStorage.removeItem('token')
+        sessionStorage.removeItem('token')
+        localStorage.removeItem('user')
+        sessionStorage.removeItem('user')
+        window.location.href = '/login'
+      }
     }
+    
     return Promise.reject(error.response?.data || error)
   }
 )

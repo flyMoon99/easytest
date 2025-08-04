@@ -77,95 +77,10 @@ const videoSchema = new mongoose.Schema({
       type: Number,
       default: 0
     },
-    // Gemini分析结果
-    geminiAnalysis: {
-      summary: String,
-      testAnalysis: {
-        functionalIssues: [{
-          issue: String,
-          severity: {
-            type: String,
-            enum: ['high', 'medium', 'low'],
-            default: 'medium'
-          },
-          impact: String,
-          recommendation: String
-        }],
-        uiIssues: [{
-          issue: String,
-          severity: {
-            type: String,
-            enum: ['high', 'medium', 'low'],
-            default: 'medium'
-          },
-          impact: String,
-          recommendation: String
-        }],
-        performanceIssues: [{
-          issue: String,
-          severity: {
-            type: String,
-            enum: ['high', 'medium', 'low'],
-            default: 'medium'
-          },
-          impact: String,
-          recommendation: String
-        }],
-        compatibilityIssues: [{
-          issue: String,
-          severity: {
-            type: String,
-            enum: ['high', 'medium', 'low'],
-            default: 'medium'
-          },
-          impact: String,
-          recommendation: String
-        }],
-        securityIssues: [{
-          issue: String,
-          severity: {
-            type: String,
-            enum: ['high', 'medium', 'low'],
-            default: 'medium'
-          },
-          impact: String,
-          recommendation: String
-        }]
-      },
-      overallAssessment: {
-        qualityScore: {
-          type: Number,
-          min: 0,
-          max: 100,
-          default: 0
-        },
-        criticalIssues: {
-          type: Number,
-          default: 0
-        },
-        majorIssues: {
-          type: Number,
-          default: 0
-        },
-        minorIssues: {
-          type: Number,
-          default: 0
-        },
-        recommendations: [String]
-      },
-      testRecommendations: [{
-        testType: {
-          type: String,
-          enum: ['功能测试', 'UI测试', '性能测试', '兼容性测试', '安全测试']
-        },
-        priority: {
-          type: String,
-          enum: ['high', 'medium', 'low'],
-          default: 'medium'
-        },
-        description: String,
-        expectedOutcome: String
-      }]
+    // Gemini解析返回的文本结果
+    geminiText: {
+      type: String,
+      default: ''
     }
   },
   
