@@ -1,5 +1,5 @@
 // AI服务配置
-export const aiConfig = {
+export const getAiConfig = () => ({
   // 通义千问配置
   qwen: {
     apiKey: process.env.QWEN_API_KEY || 'your_qwen_api_key_here',
@@ -60,6 +60,9 @@ export const aiConfig = {
       description: 'Google Gemini 2.0 Flash模型，支持文本和视觉理解'
     }
   ]
-};
+});
 
-export default aiConfig; 
+// 为了向后兼容，保留aiConfig导出
+export const aiConfig = getAiConfig();
+
+export default getAiConfig; 

@@ -3,7 +3,7 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { aiConfig } from '../config/ai.js';
+import { getAiConfig } from '../config/ai.js';
 import { getPrompt, getGeminiVideoPrompt } from './promptService.js';
 import { createTestResultsFromGeminiAnalysis } from './testResultService.js';
 
@@ -11,11 +11,23 @@ import { createTestResultsFromGeminiAnalysis } from './testResultService.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// 当前使用的AI模型
-let CURRENT_AI_MODEL = aiConfig.defaultModel;
+// 获取当前配置
+const getCurrentConfig = () => {
+  const config = getAiConfig();
+  return {
+    aiConfig: config,
+    currentModel: config.defaultModel
+  };
+};
 
-// 初始化Google Generative AI
-const genAI = new GoogleGenerativeAI(aiConfig.gemini.apiKey);
+// 当前使用的AI模型
+let CURRENT_AI_MODEL = getCurrentConfig().currentModel;
+
+// 获取Gemini实例
+const getGeminiInstance = () => {
+  const config = getCurrentConfig().aiConfig;
+  return new GoogleGenerativeAI(config.gemini.apiKey);
+};
 
 /**
  * 将图片转换为base64编码
@@ -184,7 +196,7 @@ const createDefaultGeminiAnalysis = (videoName, message = '') => {
 export const analyzeWithQwen = async (screenshotPath, testDescription, testType = 'basic_analysis') => {
   try {
     console.log(`analyzeWithQwen called with testType: ${testType}`);
-    const config = aiConfig.qwen;
+    const config = getCurrentConfig().aiConfig.qwen;
     
     // 将相对路径转换为绝对路径
     let fullImagePath;
@@ -363,7 +375,7 @@ const analyzeWithChatGPT = async (screenshotPath, testDescription) => {
 export const testGeminiConnection = async (text = "Hello, how are you?") => {
   try {
     console.log('测试Gemini API连接');
-    const config = aiConfig.gemini;
+    const config = getCurrentConfig().aiConfig.gemini;
     
     const requestData = {
       contents: [
@@ -479,7 +491,7 @@ export const analyzeVideoWithGemini = async (videoPath, videoName, memberId = nu
     const prompt = getGeminiVideoPrompt(videoName, testDescription);
     
     // 创建模型实例
-    const model = genAI.getGenerativeModel({ model: aiConfig.gemini.model });
+    const model = getGeminiInstance().getGenerativeModel({ model: getCurrentConfig().aiConfig.gemini.model });
     
     // 将视频文件转换为GenerativePart
     const videoPart = fileToGenerativePart(fullVideoPath, mimeType);
@@ -722,7 +734,8 @@ export const analyzeScreenshotAndGenerateScripts = async (screenshotPath, testDe
  * @returns {Array} 可用模型列表
  */
 export const getAvailableModels = () => {
-  return aiConfig.supportedModels.map(model => ({
+  const config = getCurrentConfig().aiConfig;
+  return config.supportedModels.map(model => ({
     ...model,
     current: model.id === CURRENT_AI_MODEL
   }));
@@ -734,7 +747,8 @@ export const getAvailableModels = () => {
  * @returns {boolean} 设置是否成功
  */
 export const setCurrentModel = (modelId) => {
-  const model = aiConfig.supportedModels.find(m => m.id === modelId);
+  const config = getCurrentConfig().aiConfig;
+  const model = config.supportedModels.find(m => m.id === modelId);
   if (model) {
     CURRENT_AI_MODEL = modelId;
     return true;
