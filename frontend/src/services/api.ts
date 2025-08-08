@@ -1,11 +1,11 @@
 import axios from 'axios'
 import type { AxiosInstance, AxiosResponse } from 'axios'
 import type { LoginForm, RegisterForm, AuthResponse } from '@/types/auth'
-import type { TestRecord, TestForm } from '@/types/test'
+import type { TestRecord, TestForm, AnalyzeResponsePayload } from '@/types/test'
 
 // 创建axios实例
 const api: AxiosInstance = axios.create({
-  baseURL: 'http://localhost:3001/api',
+  baseURL: 'http://localhost:10061/api',
   timeout: 120000, // 增加到120秒，适应AI分析的时间需求
   headers: {
     'Content-Type': 'application/json'
@@ -100,6 +100,9 @@ export const testCaseAPI = {
   // 创建测试用例
   create: (testData: TestForm): Promise<{ success: boolean; data: TestRecord; message: string }> => 
     api.post('/testcases', testData),
+  // 创建测试用例（带图片上传，multipart）
+  createWithImage: (formData: FormData): Promise<{ success: boolean; data: TestRecord; message: string }> =>
+    api.post('/testcases', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
   
   // 获取测试用例列表
   getList: (params = {}): Promise<{ 
@@ -137,8 +140,8 @@ export const testCaseAPI = {
   execute: (id: string): Promise<{ success: boolean; data: TestRecord; message: string }> => 
     api.post(`/testcases/${id}/execute`),
   
-  // AI分析
-  analyze: (id: string, options: { aiModel: string; testType: string }): Promise<{ success: boolean; data: TestRecord; message: string }> => 
+  // AI分析（testType 可选，后端可自动检测）
+  analyze: (id: string, options: { aiModel: string; testType?: string }): Promise<{ success: boolean; data: AnalyzeResponsePayload; message: string }> => 
     api.post(`/testcases/${id}/analyze`, options)
 }
 

@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { testCaseAPI } from '@/services/api'
-import type { TestRecord, TestForm, TestStatistics, PlaywrightScript } from '@/types'
+import type { TestRecord, TestForm, TestStatistics, PlaywrightScript, AnalyzeResponsePayload } from '@/types'
 
 export const useTestStore = defineStore('test', () => {
   // 状态
@@ -24,13 +24,28 @@ export const useTestStore = defineStore('test', () => {
   })
 
   // 创建测试
-  const createTest = async (testData: TestForm) => {
+  const createTest = async (testData: TestForm & { screenshotFile?: File | null }) => {
     loading.value = true
     error.value = null
     
     try {
-      const response = await testCaseAPI.create(testData)
+      let response
+      if (testData && (testData as any).screenshotFile) {
+        const fd = new FormData()
+        fd.append('title', testData.title)
+        fd.append('entryUrl', testData.entryUrl)
+        fd.append('description', testData.description)
+        const file = (testData as any).screenshotFile as File
+        if (file) fd.append('screenshot', file)
+        response = await testCaseAPI.createWithImage(fd)
+      } else {
+        response = await testCaseAPI.create(testData)
+      }
       const newTest = response.data
+      // 若携带了截图且后端状态非 screened，则在前端兜底为 screened
+      if ((testData as any).screenshotFile && newTest?.screenshotUrl && newTest.status !== 'screened') {
+        newTest.status = 'screened'
+      }
       
       testRecords.value.unshift(newTest)
       
@@ -307,25 +322,32 @@ export const useTestStore = defineStore('test', () => {
     }
   }
 
-  // AI分析
-  const analyzeTest = async (id: string, options: { aiModel: string; testType: string }) => {
+  // AI分析（支持后端自动检测测试类型）
+  const analyzeTest = async (id: string, options: { aiModel: string; testType?: string }) => {
     loading.value = true
     error.value = null
     
     try {
       const response = await testCaseAPI.analyze(id, options)
-      
-      // 更新本地数据
+      const payload = response.data as AnalyzeResponsePayload | any
+      const updated = payload?.testCase ?? payload
+
+      // 写回本地列表
       const index = testRecords.value.findIndex(t => t.id === id)
       if (index > -1) {
-        testRecords.value[index] = response.data
+        testRecords.value[index] = updated
       }
-      
+
+      // 写回当前详情
       if (currentTest.value?.id === id) {
-        currentTest.value = response.data
+        currentTest.value = updated
       }
-      
-      return response.data
+
+      if (!payload?.testCase) {
+        console.warn('analyze 返回结构与预期不一致，已使用降级数据写回:', payload)
+      }
+
+      return updated
     } catch (err: any) {
       error.value = err.message || 'AI分析失败'
       throw err

@@ -13,7 +13,7 @@ export const useAiChatStore = defineStore('aiChat', () => {
 
   // 创建axios实例
   const api = axios.create({
-    baseURL: 'http://localhost:3001/api',
+    baseURL: 'http://localhost:10061/api',
     timeout: 120000,
     headers: {
       'Content-Type': 'application/json'
@@ -162,4 +162,4 @@ export const useAiChatStore = defineStore('aiChat', () => {
     sendMessageStream,
     clearState
   }
-}) 
+})

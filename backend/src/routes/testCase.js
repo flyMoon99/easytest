@@ -1,4 +1,7 @@
 import express from 'express';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
 import { successResponse, errorResponse, serverErrorResponse } from '../utils/response.js';
 import { authenticateToken } from '../middleware/auth.js';
 import TestCase from '../models/TestCase.js';
@@ -8,6 +11,42 @@ import { detectTestType, getAvailableTestTypes } from '../services/promptService
 import Joi from 'joi';
 
 const router = express.Router();
+
+// 配置图片上传（保存到 public/screenshots）
+const screenshotsDir = path.join(process.cwd(), 'public', 'screenshots');
+if (!fs.existsSync(screenshotsDir)) {
+  fs.mkdirSync(screenshotsDir, { recursive: true });
+}
+
+const imageStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, screenshotsDir);
+  },
+  filename: function (req, file, cb) {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+    cb(null, `screenshot-${unique}${ext}`);
+  }
+});
+
+const allowedImageMimes = new Set([
+  'image/png',
+  'image/jpeg',
+  'image/jpg',
+  'image/webp'
+]);
+
+const uploadImage = multer({
+  storage: imageStorage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  fileFilter: (req, file, cb) => {
+    const ok = allowedImageMimes.has((file.mimetype || '').toLowerCase());
+    if (!ok) {
+      return cb(new Error('不支持的图片类型'));
+    }
+    cb(null, true);
+  }
+});
 
 // 验证模式
 const createTestCaseSchema = Joi.object({
@@ -45,18 +84,24 @@ const updateTestCaseSchema = Joi.object({
 });
 
 /**
- * 创建测试用例
+ * 创建测试用例（支持multipart图片上传）
  * POST /api/testcases
  */
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/', authenticateToken, uploadImage.single('screenshot'), async (req, res) => {
   try {
     // 验证请求数据
-    const { error, value } = createTestCaseSchema.validate(req.body);
+    const { error, value } = createTestCaseSchema.validate(req.body, { allowUnknown: true, stripUnknown: true });
     if (error) {
       return errorResponse(res, error.details[0].message, 400);
     }
 
     const { title, entryUrl, description } = value;
+
+    // 判断是否上传了图片
+    const hasScreenshot = !!req.file;
+    const relativeScreenshotPath = hasScreenshot
+      ? `/screenshots/${req.file.filename}`
+      : '';
 
     // 创建测试用例
     const testCase = new TestCase({
@@ -64,7 +109,9 @@ router.post('/', authenticateToken, async (req, res) => {
       title,
       entryUrl,
       description,
-      status: 'pending'
+      status: hasScreenshot ? 'screened' : 'pending',
+      screenshotUrl: relativeScreenshotPath,
+      startedAt: hasScreenshot ? new Date() : undefined
     });
 
     await testCase.save();
@@ -72,6 +119,13 @@ router.post('/', authenticateToken, async (req, res) => {
     return successResponse(res, testCase, '测试用例创建成功', 201);
   } catch (error) {
     console.error('创建测试用例失败:', error);
+    // 处理上传相关错误
+    if (error.message === '不支持的图片类型') {
+      return errorResponse(res, '不支持的图片类型，请上传 PNG/JPG/JPEG/WEBP 格式', 400);
+    }
+    if (error.code === 'LIMIT_FILE_SIZE') {
+      return errorResponse(res, '图片大小超过限制，最大支持 10MB', 400);
+    }
     return serverErrorResponse(res, '创建测试用例失败');
   }
 });

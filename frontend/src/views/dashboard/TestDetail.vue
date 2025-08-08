@@ -26,14 +26,7 @@
         >
           生成报告
         </BaseButton>
-        <BaseButton 
-          v-if="currentTest && ['pending', 'failed'].includes(currentTest.status)"
-          variant="primary"
-          :loading="testStore.loading"
-          @click="handleExecuteTest"
-        >
-          开始截图
-        </BaseButton>
+        <!-- 去除开始截图按钮：由用户上传替代 -->
         <BaseButton 
           v-if="currentTest && currentTest.status === 'screened' && currentTest.screenshotUrl"
           variant="primary"
@@ -131,98 +124,31 @@
           </div>
         </BaseCard>
         
-        <!-- 右侧：测试过程展示框 -->
-        <BaseCard title="测试过程">
-          <div v-if="currentTest?.status === 'pending'" class="text-center py-8">
-            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <h3 class="mt-2 text-sm font-medium text-gray-900">等待执行</h3>
-            <p class="mt-1 text-sm text-gray-500">点击"开始执行"按钮开始测试</p>
-          </div>
-          
-          <div v-else-if="currentTest?.status === 'screened'" class="text-center py-8">
-            <div class="flex justify-center">
-              <svg class="animate-spin h-8 w-8 text-orange-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
+        <!-- 右侧：页面截图（始终展示上传的图片） -->
+        <BaseCard title="页面截图">
+          <template v-if="currentTest?.screenshotUrl">
+            <div class="border border-gray-200 rounded-lg overflow-hidden">
+              <img
+                :src="currentTest.screenshotUrl.startsWith('http') ? currentTest.screenshotUrl : `http://localhost:10061${currentTest.screenshotUrl}`"
+                :alt="`${currentTest.title} 截图`"
+                class="w-full h-auto"
+                @error="handleImageError"
+                @load="handleImageLoad"
+              />
             </div>
-            <h3 class="mt-2 text-sm font-medium text-gray-900">截图已完成</h3>
-            <p class="mt-1 text-sm text-gray-500">正在等待AI解析...</p>
-          </div>
-          
-          <div v-else-if="currentTest?.status === 'analyzed'" class="text-center py-8">
-            <div class="flex justify-center">
-              <svg class="animate-spin h-8 w-8 text-purple-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-            </div>
-            <h3 class="mt-2 text-sm font-medium text-gray-900">AI解析已完成</h3>
-            <p class="mt-1 text-sm text-gray-500">正在等待执行...</p>
-          </div>
-          
-          <div v-else-if="currentTest?.status === 'completed' && currentTest.screenshotUrl" class="space-y-4">
-            <div>
-              <h4 class="text-sm font-medium text-gray-900 mb-2">网页截图</h4>
-              <div class="border border-gray-200 rounded-lg overflow-hidden">
-                <img 
-                  :src="currentTest.screenshotUrl ? `http://localhost:3001${currentTest.screenshotUrl}` : ''"
-                  :alt="`${currentTest.title} 截图`"
-                  class="w-full h-auto"
-                  @error="handleImageError"
-                  @load="handleImageLoad"
-                />
-              </div>
-              <p class="text-xs text-gray-500 mt-2">
-                测试入口URL: {{ currentTest.entryUrl }}
-              </p>
-            </div>
-            
-            <div v-if="currentTest.result">
-              <h4 class="text-sm font-medium text-gray-900 mb-2">执行结果</h4>
-              <div :class="[
-                'border rounded-lg p-3',
-                currentTest.result.success 
-                  ? 'bg-green-50 border-green-200' 
-                  : 'bg-red-50 border-red-200'
-              ]">
-                <p :class="[
-                  'text-sm',
-                  currentTest.result.success ? 'text-green-800' : 'text-red-800'
-                ]">
-                  {{ currentTest.result.message }}
-                </p>
-                <p v-if="currentTest.result.errorDetails" class="text-xs text-gray-600 mt-1">
-                  错误详情: {{ currentTest.result.errorDetails }}
-                </p>
-              </div>
-            </div>
-          </div>
-          
-          <div v-else-if="currentTest?.status === 'failed'" class="text-center py-8">
-            <svg class="mx-auto h-12 w-12 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-            </svg>
-            <h3 class="mt-2 text-sm font-medium text-gray-900">执行失败</h3>
-            <p class="mt-1 text-sm text-gray-500">
-              {{ currentTest.result?.message || '测试执行过程中出现错误' }}
+            <p class="text-xs text-gray-500 mt-2">
+              测试入口URL: {{ currentTest.entryUrl }}
             </p>
-            <p v-if="currentTest.result?.errorDetails" class="mt-1 text-xs text-gray-400">
-              错误详情: {{ currentTest.result.errorDetails }}
-            </p>
-            <div class="mt-4">
-              <BaseButton 
-                variant="primary"
-                size="sm"
-                :loading="testStore.loading"
-                @click="handleExecuteTest"
-              >
-                重新执行
-              </BaseButton>
+          </template>
+          <template v-else>
+            <div class="text-center py-8">
+              <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <h3 class="mt-2 text-sm font-medium text-gray-900">暂无截图</h3>
+              <p class="mt-1 text-sm text-gray-500">请在“新增测试”中上传页面截图后再查看。</p>
             </div>
-          </div>
+          </template>
         </BaseCard>
       </div>
 
@@ -416,7 +342,6 @@ const testId = computed(() => route.params.id as string)
 const getStatusStyle = (status: TestRecord['status']) => {
   const styles = {
     pending: 'bg-yellow-100 text-yellow-800',
-            screened: 'bg-orange-100 text-orange-800',
     screened: 'bg-orange-100 text-orange-800',
     analyzed: 'bg-purple-100 text-purple-800',
     completed: 'bg-green-100 text-green-800',
@@ -428,7 +353,6 @@ const getStatusStyle = (status: TestRecord['status']) => {
 const getStatusDotColor = (status: TestRecord['status']) => {
   const colors = {
     pending: 'bg-yellow-400',
-            screened: 'bg-orange-400',
     screened: 'bg-orange-400',
     analyzed: 'bg-purple-400',
     completed: 'bg-green-400',
@@ -440,7 +364,6 @@ const getStatusDotColor = (status: TestRecord['status']) => {
 const getStatusText = (status: TestRecord['status']) => {
   const texts = {
     pending: '等待截图',
-            screened: '已截图',
     screened: '已截图',
     analyzed: '已解析',
     completed: '已完成',
@@ -473,10 +396,11 @@ const formatDuration = (milliseconds: number) => {
 }
 
 const formatPlaywrightCode = (script: PlaywrightScript) => {
+  const normalized = (script.action || '').replace(/^page\./, '')
   let code = `await ${script.action}(`
   
-  // 根据不同的action类型生成不同的代码格式
-  switch (script.action) {
+  // 根据不同的action类型生成不同的代码格式（兼容 page. 前缀）
+  switch (normalized) {
     case 'goto':
       // goto方法只需要URL
       code += `'${script.selector || script.value}'`

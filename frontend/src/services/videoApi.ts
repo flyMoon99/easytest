@@ -69,7 +69,7 @@ export const videoAPI = {
   ): Promise<void> => {
     try {
       const token = localStorage.getItem('token') || sessionStorage.getItem('token')
-      const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001'
+      const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:10061'
       
       if (!token) {
         throw new Error('未找到认证令牌，请重新登录')

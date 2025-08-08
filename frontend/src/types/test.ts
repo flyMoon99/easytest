@@ -25,6 +25,15 @@ export interface TestRecord {
   }
 }
 
+// 与后端 /api/testcases/:id/analyze 返回结构保持一致
+export interface AnalyzeResponsePayload {
+  testCase: TestRecord
+  analysis: string | any
+  scripts: PlaywrightScript[]
+  aiModel: string
+  testType: string
+}
+
 export interface PlaywrightScript {
   id: string
   testRecordId: string

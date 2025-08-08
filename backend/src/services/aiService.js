@@ -69,6 +69,26 @@ const compressImageIfNeeded = (imagePath) => {
 };
 
 /**
+ * 根据图片扩展名推断 MIME 类型
+ * @param {string} imagePath
+ * @returns {string} mime
+ */
+const getImageMimeType = (imagePath) => {
+  const ext = path.extname(imagePath).toLowerCase();
+  switch (ext) {
+    case '.png':
+      return 'image/png';
+    case '.jpg':
+    case '.jpeg':
+      return 'image/jpeg';
+    case '.webp':
+      return 'image/webp';
+    default:
+      return 'image/png';
+  }
+};
+
+/**
  * 带重试机制的API调用
  * @param {Function} apiCall - API调用函数
  * @param {number} maxRetries - 最大重试次数
@@ -197,6 +217,7 @@ export const analyzeWithQwen = async (screenshotPath, testDescription, testType 
   try {
     console.log(`analyzeWithQwen called with testType: ${testType}`);
     const config = getCurrentConfig().aiConfig.qwen;
+    console.log('Qwen model =', config.model);
     
     // 将相对路径转换为绝对路径
     let fullImagePath;
@@ -217,6 +238,7 @@ export const analyzeWithQwen = async (screenshotPath, testDescription, testType 
     
     // 读取截图并转换为base64（带压缩检查）
     const base64Image = compressImageIfNeeded(fullImagePath);
+    const imageMime = getImageMimeType(fullImagePath);
     console.log(`图片转换完成，大小: ${(base64Image.length * 0.75 / 1024).toFixed(2)}KB`);
     
     // 获取提示词
@@ -231,12 +253,8 @@ export const analyzeWithQwen = async (screenshotPath, testDescription, testType 
           {
             role: 'user',
             content: [
-              {
-                text: prompt
-              },
-              {
-                image: `data:image/png;base64,${base64Image}`
-              }
+              { text: prompt },
+              { image: `data:${imageMime};base64,${base64Image}` }
             ]
           }
         ]

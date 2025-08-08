@@ -4,7 +4,8 @@ export const getAiConfig = () => ({
   qwen: {
     apiKey: process.env.QWEN_API_KEY || 'your_qwen_api_key_here',
     baseURL: process.env.QWEN_BASE_URL || 'https://dashscope.aliyuncs.com/api/v1',
-    model: process.env.QWEN_MODEL || 'qwen-turbo', // 使用文本对话模型而不是视觉模型
+    // 使用视觉语言模型以支持图像理解
+    model: process.env.QWEN_MODEL || 'qwen-vl-max',
     maxTokens: 2000,
     temperature: 0.1,
     timeout: 60000, // 60秒超时

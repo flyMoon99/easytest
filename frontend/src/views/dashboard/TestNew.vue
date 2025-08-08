@@ -57,6 +57,21 @@
           </p>
         </div>
 
+        <!-- 上传截图（可选） -->
+        <div class="space-y-1">
+          <label class="block text-sm font-medium text-gray-700">
+            上传页面截图（可选）
+          </label>
+          <input
+            type="file"
+            accept="image/png,image/jpeg,image/jpg,image/webp"
+            @change="onFileChange"
+            class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none"
+          />
+          <p class="text-xs text-gray-500">支持 PNG / JPG / JPEG / WEBP，最大 10MB。上传后将直接进入“已截图”状态，可立即进行AI解析。</p>
+          <p v-if="fileError" class="text-sm text-red-600">{{ fileError }}</p>
+        </div>
+
         <div class="border-t border-gray-200 pt-6">
           <div class="flex justify-end space-x-4">
             <BaseButton
@@ -121,7 +136,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, computed } from 'vue'
+import { reactive, ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTestStore } from '@/stores/test'
 import BaseInput from '@/components/base/BaseInput.vue'
@@ -136,6 +151,9 @@ const form = reactive({
   entryUrl: '',
   description: ''
 })
+
+const screenshotFile = ref<File | null>(null)
+const fileError = ref('')
 
 const errors = reactive({
   title: '',
@@ -199,7 +217,8 @@ const handleSubmit = async () => {
     const newTest = await testStore.createTest({
       title: form.title,
       entryUrl: form.entryUrl,
-      description: form.description
+      description: form.description,
+      screenshotFile: screenshotFile.value || undefined
     })
     
     // 创建成功，跳转到测试详情页
@@ -214,8 +233,33 @@ const handleReset = () => {
   form.title = ''
   form.entryUrl = ''
   form.description = ''
+  screenshotFile.value = null
+  fileError.value = ''
   errors.title = ''
   errors.entryUrl = ''
   errors.description = ''
+}
+
+const onFileChange = (e: Event) => {
+  fileError.value = ''
+  const input = e.target as HTMLInputElement
+  const file = input.files && input.files[0]
+  if (!file) {
+    screenshotFile.value = null
+    return
+  }
+  const allowed = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp']
+  if (!allowed.includes(file.type)) {
+    fileError.value = '不支持的图片类型，请上传 PNG/JPG/JPEG/WEBP 格式'
+    screenshotFile.value = null
+    return
+  }
+  const maxSize = 10 * 1024 * 1024
+  if (file.size > maxSize) {
+    fileError.value = '图片大小超过限制，最大支持 10MB'
+    screenshotFile.value = null
+    return
+  }
+  screenshotFile.value = file
 }
 </script> 
