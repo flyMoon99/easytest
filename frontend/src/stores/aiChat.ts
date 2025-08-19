@@ -81,7 +81,7 @@ export const useAiChatStore = defineStore('aiChat', () => {
     try {
       const token = authStore.token || localStorage.getItem('token') || sessionStorage.getItem('token')
       
-      const response = await fetch('http://localhost:3001/api/ai-chat/stream', {
+      const response = await fetch('http://localhost:10061/api/ai-chat/stream', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
