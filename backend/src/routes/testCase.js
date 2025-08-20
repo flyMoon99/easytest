@@ -63,6 +63,9 @@ const createTestCaseSchema = Joi.object({
     'string.min': '测试描述至少5个字符',
     'string.max': '测试描述最多2000个字符',
     'any.required': '测试内容描述是必填项'
+  }),
+  directoryId: Joi.string().required().messages({
+    'any.required': '目录是必填项'
   })
 });
 
@@ -95,7 +98,7 @@ router.post('/', authenticateToken, uploadImage.single('screenshot'), async (req
       return errorResponse(res, error.details[0].message, 400);
     }
 
-    const { title, entryUrl, description } = value;
+    const { title, entryUrl, description, directoryId } = value;
 
     // 判断是否上传了图片
     const hasScreenshot = !!req.file;
@@ -106,6 +109,7 @@ router.post('/', authenticateToken, uploadImage.single('screenshot'), async (req
     // 创建测试用例
     const testCase = new TestCase({
       memberId: req.user._id,
+      directoryId,
       title,
       entryUrl,
       description,

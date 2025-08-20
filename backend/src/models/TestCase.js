@@ -9,6 +9,14 @@ const testCaseSchema = new mongoose.Schema({
     index: true
   },
   
+  // 关联目录
+  directoryId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'TestCaseDirectory',
+    required: [true, '目录ID是必填项'],
+    index: true
+  },
+  
   // 基础信息
   title: {
     type: String,
@@ -149,6 +157,8 @@ const testCaseSchema = new mongoose.Schema({
 testCaseSchema.index({ memberId: 1, createdAt: -1 });
 testCaseSchema.index({ status: 1, createdAt: -1 });
 testCaseSchema.index({ memberId: 1, status: 1 });
+testCaseSchema.index({ directoryId: 1, createdAt: -1 });
+testCaseSchema.index({ memberId: 1, directoryId: 1 });
 
 // 实例方法
 testCaseSchema.methods.updateStatus = function(status, additionalData = {}) {

@@ -259,7 +259,6 @@ const filteredTests = computed(() => {
 const getStatusStyle = (status: TestRecord['status']) => {
   const styles = {
     pending: 'bg-yellow-100 text-yellow-800',
-            screened: 'bg-orange-100 text-orange-800',
     screened: 'bg-orange-100 text-orange-800',
     analyzed: 'bg-purple-100 text-purple-800',
     completed: 'bg-green-100 text-green-800',
@@ -271,7 +270,6 @@ const getStatusStyle = (status: TestRecord['status']) => {
 const getStatusDotColor = (status: TestRecord['status']) => {
   const colors = {
     pending: 'bg-yellow-400',
-            screened: 'bg-orange-400',
     screened: 'bg-orange-400',
     analyzed: 'bg-purple-400',
     completed: 'bg-green-400',
@@ -283,7 +281,6 @@ const getStatusDotColor = (status: TestRecord['status']) => {
 const getStatusText = (status: TestRecord['status']) => {
   const texts = {
     pending: '等待截图',
-            screened: '已截图',
     screened: '已截图',
     analyzed: '已解析',
     completed: '已完成',

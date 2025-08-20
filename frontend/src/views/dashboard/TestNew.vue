@@ -36,6 +36,72 @@
           @blur="validateEntryUrl"
         />
 
+        <!-- 目录选择 -->
+        <div class="space-y-1">
+          <label class="block text-sm font-medium text-gray-700">
+            选择目录
+            <span class="text-red-500 ml-1">*</span>
+          </label>
+          <div class="border border-gray-300 rounded-lg p-4 bg-gray-50">
+            <div v-if="!form.directoryId" class="text-center py-8">
+              <p class="text-gray-500 mb-4">请选择一个目录来组织您的测试用例</p>
+              <button
+                type="button"
+                @click="showDirectorySelector = true"
+                class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+              >
+                选择目录
+              </button>
+            </div>
+            <div v-else class="flex items-center justify-between">
+              <div class="flex items-center space-x-2">
+                <span class="text-sm font-medium text-gray-900">{{ selectedDirectoryName }}</span>
+                <span class="text-xs text-gray-500">({{ selectedDirectoryPath }})</span>
+              </div>
+              <button
+                type="button"
+                @click="showDirectorySelector = true"
+                class="text-sm text-primary-600 hover:text-primary-700"
+              >
+                更改
+              </button>
+            </div>
+          </div>
+          <p v-if="errors.directoryId" class="text-sm text-red-600">
+            {{ errors.directoryId }}
+          </p>
+        </div>
+
+        <!-- 目录选择器模态框 -->
+        <BaseModal
+          v-model="showDirectorySelector"
+          title="选择目录"
+          size="lg"
+        >
+          <div class="h-96">
+            <DirectoryTree
+              :readonly="true"
+              @select="handleDirectorySelect"
+            />
+          </div>
+          <template #footer>
+            <div class="flex justify-end space-x-3">
+              <BaseButton
+                variant="outline"
+                @click="showDirectorySelector = false"
+              >
+                取消
+              </BaseButton>
+              <BaseButton
+                @click="confirmDirectorySelect"
+                :disabled="!form.directoryId"
+              >
+                确认选择
+              </BaseButton>
+            </div>
+          </template>
+        </BaseModal>
+
         <div class="space-y-1">
           <label class="block text-sm font-medium text-gray-700">
             测试内容描述
@@ -136,29 +202,37 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, computed } from 'vue'
+import { reactive, ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTestStore } from '@/stores/test'
+import { useDirectoryStore } from '@/stores/directory'
 import BaseInput from '@/components/base/BaseInput.vue'
 import BaseButton from '@/components/base/BaseButton.vue'
 import BaseCard from '@/components/base/BaseCard.vue'
+import BaseModal from '@/components/base/BaseModal.vue'
+import DirectoryTree from '@/components/directory/DirectoryTree.vue'
 
 const router = useRouter()
 const testStore = useTestStore()
+const directoryStore = useDirectoryStore()
 
 const form = reactive({
   title: '',
   entryUrl: '',
-  description: ''
+  description: '',
+  directoryId: ''
 })
 
 const screenshotFile = ref<File | null>(null)
 const fileError = ref('')
+const showDirectorySelector = ref(false)
+const tempSelectedDirectory = ref<{ id: string; name: string; path: string } | null>(null)
 
 const errors = reactive({
   title: '',
   entryUrl: '',
-  description: ''
+  description: '',
+  directoryId: ''
 })
 
 const isFormValid = computed(() => {
@@ -166,9 +240,11 @@ const isFormValid = computed(() => {
     form.title && 
     form.entryUrl && 
     form.description &&
+    form.directoryId &&
     !errors.title && 
     !errors.entryUrl && 
-    !errors.description
+    !errors.description &&
+    !errors.directoryId
   )
 })
 
@@ -206,10 +282,19 @@ const validateDescription = () => {
   }
 }
 
+const validateDirectory = () => {
+  if (!form.directoryId) {
+    errors.directoryId = '请选择一个目录'
+  } else {
+    errors.directoryId = ''
+  }
+}
+
 const handleSubmit = async () => {
   validateTitle()
   validateEntryUrl()
   validateDescription()
+  validateDirectory()
   
   if (!isFormValid.value) return
 
@@ -218,6 +303,7 @@ const handleSubmit = async () => {
       title: form.title,
       entryUrl: form.entryUrl,
       description: form.description,
+      directoryId: form.directoryId,
       screenshotFile: screenshotFile.value || undefined
     })
     
@@ -233,11 +319,14 @@ const handleReset = () => {
   form.title = ''
   form.entryUrl = ''
   form.description = ''
+  form.directoryId = ''
   screenshotFile.value = null
   fileError.value = ''
   errors.title = ''
   errors.entryUrl = ''
   errors.description = ''
+  errors.directoryId = ''
+  tempSelectedDirectory.value = null
 }
 
 const onFileChange = (e: Event) => {
@@ -262,4 +351,42 @@ const onFileChange = (e: Event) => {
   }
   screenshotFile.value = file
 }
+
+// 目录选择相关方法
+const handleDirectorySelect = (directory: any) => {
+  tempSelectedDirectory.value = {
+    id: directory.id,
+    name: directory.name,
+    path: directory.path
+  }
+}
+
+const confirmDirectorySelect = () => {
+  if (tempSelectedDirectory.value) {
+    form.directoryId = tempSelectedDirectory.value.id
+    showDirectorySelector.value = false
+    validateDirectory()
+  }
+}
+
+// 计算属性
+const selectedDirectoryName = computed(() => {
+  if (!form.directoryId) return ''
+  const directory = directoryStore.directories.find(d => d.id === form.directoryId)
+  return directory?.name || ''
+})
+
+const selectedDirectoryPath = computed(() => {
+  if (!form.directoryId) return ''
+  const directory = directoryStore.directories.find(d => d.id === form.directoryId)
+  return directory?.path || ''
+})
+
+// 生命周期
+onMounted(async () => {
+  // 加载目录树
+  if (directoryStore.directories.length === 0) {
+    await directoryStore.fetchDirectoryTree()
+  }
+})
 </script> 

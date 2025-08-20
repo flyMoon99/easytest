@@ -35,6 +35,7 @@ export const useTestStore = defineStore('test', () => {
         fd.append('title', testData.title)
         fd.append('entryUrl', testData.entryUrl)
         fd.append('description', testData.description)
+        fd.append('directoryId', testData.directoryId)
         const file = (testData as any).screenshotFile as File
         if (file) fd.append('screenshot', file)
         response = await testCaseAPI.createWithImage(fd)
@@ -238,6 +239,7 @@ export const useTestStore = defineStore('test', () => {
         title: '用户登录功能测试',
         entryUrl: 'https://example.com/login',
         description: '测试用户登录流程，包括邮箱验证、密码验证和登录状态检查',
+        directoryId: 'mock-directory-1',
         status: 'pending',
         createdAt: '2025-01-13T10:30:00Z',
         playwrightScripts: [],
@@ -248,6 +250,7 @@ export const useTestStore = defineStore('test', () => {
         title: '商品搜索功能测试',
         entryUrl: 'https://example.com/products',
         description: '测试商品搜索、筛选和排序功能',
+        directoryId: 'mock-directory-2',
         status: 'pending',
         createdAt: '2025-01-13T14:20:00Z',
         playwrightScripts: [],
@@ -258,6 +261,7 @@ export const useTestStore = defineStore('test', () => {
         title: '购物车操作测试',
         entryUrl: 'https://example.com/cart',
         description: '测试添加商品到购物车、修改数量、删除商品等操作',
+        directoryId: 'mock-directory-3',
         status: 'pending',
         createdAt: '2025-01-14T09:15:00Z',
         playwrightScripts: [],

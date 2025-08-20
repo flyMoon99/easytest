@@ -3,6 +3,7 @@ export interface TestRecord {
   title: string
   entryUrl: string
   description: string
+  directoryId: string
   status: TestStatus
   createdAt: string
   updatedAt?: string
@@ -52,6 +53,7 @@ export interface TestForm {
   title: string
   entryUrl: string
   description: string
+  directoryId: string
 }
 
 export interface TestStatistics {
