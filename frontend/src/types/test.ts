@@ -4,6 +4,7 @@ export interface TestRecord {
   entryUrl: string
   description: string
   directoryId: string
+  level?: string // 用例等级：高、中、低
   status: TestStatus
   createdAt: string
   updatedAt?: string
@@ -54,6 +55,7 @@ export interface TestForm {
   entryUrl: string
   description: string
   directoryId: string
+  level?: string // 用例等级：高、中、低
 }
 
 export interface TestStatistics {

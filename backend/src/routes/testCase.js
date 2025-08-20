@@ -66,6 +66,9 @@ const createTestCaseSchema = Joi.object({
   }),
   directoryId: Joi.string().required().messages({
     'any.required': '目录是必填项'
+  }),
+  level: Joi.string().valid('高', '中', '低').optional().messages({
+    'any.only': '用例等级只能是高、中、低'
   })
 });
 
@@ -83,6 +86,9 @@ const updateTestCaseSchema = Joi.object({
   }),
   status: Joi.string().valid('pending', 'screened', 'analyzed', 'completed', 'failed').messages({
     'any.only': '状态值无效'
+  }),
+  level: Joi.string().valid('高', '中', '低').messages({
+    'any.only': '用例等级只能是高、中、低'
   })
 });
 
@@ -98,7 +104,7 @@ router.post('/', authenticateToken, uploadImage.single('screenshot'), async (req
       return errorResponse(res, error.details[0].message, 400);
     }
 
-    const { title, entryUrl, description, directoryId } = value;
+    const { title, entryUrl, description, directoryId, level } = value;
 
     // 判断是否上传了图片
     const hasScreenshot = !!req.file;
@@ -113,6 +119,7 @@ router.post('/', authenticateToken, uploadImage.single('screenshot'), async (req
       title,
       entryUrl,
       description,
+      level: level || '中', // 默认等级为中
       status: hasScreenshot ? 'screened' : 'pending',
       screenshotUrl: relativeScreenshotPath,
       startedAt: hasScreenshot ? new Date() : undefined
@@ -140,7 +147,64 @@ router.post('/', authenticateToken, uploadImage.single('screenshot'), async (req
  */
 router.get('/', authenticateToken, async (req, res) => {
   try {
-    const { page = 1, limit = 10, status, search } = req.query;
+    const { page = 1, limit = 10, status, search, all } = req.query;
+    
+    // 如果请求所有用例（用于选择器）
+    if (all === 'true') {
+      const query = { memberId: req.user._id };
+      
+      if (status) {
+        query.status = status;
+      }
+      
+      if (search) {
+        query.$or = [
+          { title: { $regex: search, $options: 'i' } },
+          { description: { $regex: search, $options: 'i' } }
+        ];
+      }
+
+      const testCases = await TestCase.find(query)
+        .populate('directoryId', 'name path')
+        .sort({ createdAt: -1 })
+        .lean();
+
+      // 格式化数据
+      const formattedCases = testCases.map(testCase => {
+        const directoryPath = testCase.directoryId ? 
+          testCase.directoryId.path.split('/').filter(Boolean) : [];
+        
+        return {
+          id: testCase._id.toString(),
+          title: testCase.title,
+          status: testCase.status,
+          assignee: testCase.assignee || '未分配',
+          updatedAt: testCase.updatedAt,
+          directoryPath: directoryPath,
+          level: '中', // 默认等级
+          result: 'notExecuted',
+          executionCount: 0,
+          relatedBugs: '',
+          lastExecutor: testCase.assignee || '未分配',
+          lastExecutionTime: testCase.updatedAt
+        };
+      });
+
+      return successResponse(res, {
+        testCases: formattedCases,
+        pagination: {
+          current: 1,
+          pageSize: formattedCases.length,
+          total: formattedCases.length,
+          pages: 1
+        },
+        statistics: {
+          total: formattedCases.length
+        }
+      }, '获取所有测试用例成功');
+    }
+
+    // 原有的分页逻辑
     const skip = (page - 1) * limit;
 
     // 构建查询条件

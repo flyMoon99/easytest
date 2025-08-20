@@ -3,11 +3,11 @@
     <!-- 页面标题 -->
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900">测试记录</h1>
-        <p class="text-gray-600">查看和管理您的所有测试记录</p>
+        <h1 class="text-2xl font-bold text-gray-900">用例列表</h1>
+        <p class="text-gray-600">查看和管理您的所有用例记录</p>
       </div>
       <BaseButton @click="router.push('/dashboard/test/new')">
-        新增测试
+        新增用例
       </BaseButton>
     </div>
 
@@ -78,11 +78,11 @@
       </div>
     </div>
 
-    <!-- 测试记录列表 -->
+    <!-- 用例记录列表 -->
     <BaseCard>
       <template #header>
         <div class="flex items-center justify-between">
-          <h3 class="text-lg font-medium text-gray-900">测试记录</h3>
+          <h3 class="text-lg font-medium text-gray-900">用例记录</h3>
           <div class="flex items-center space-x-2">
             <select 
               v-model="filterStatus"
@@ -112,11 +112,11 @@
         <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
           <path d="M34 40h10v-4a6 6 0 00-10.712-3.714M34 40H14m20 0v-4a9.971 9.971 0 00-.712-3.714M14 40H4v-4a6 6 0 0110.713-3.714M14 40v-4c0-1.313.253-2.566.713-3.714m0 0A9.971 9.971 0 0118 28c2.624 0 4.928 1.006 6.713 2.714M30 20a6 6 0 11-12 0 6 6 0 0112 0z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
         </svg>
-        <h3 class="mt-2 text-sm font-medium text-gray-900">暂无测试记录</h3>
-        <p class="mt-1 text-sm text-gray-500">开始创建您的第一个测试</p>
+        <h3 class="mt-2 text-sm font-medium text-gray-900">暂无用例记录</h3>
+        <p class="mt-1 text-sm text-gray-500">开始创建您的第一个用例</p>
         <div class="mt-6">
           <BaseButton @click="router.push('/dashboard/test/new')">
-            新增测试
+            新增用例
           </BaseButton>
         </div>
       </div>
@@ -127,7 +127,7 @@
             <thead class="bg-gray-50">
               <tr>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  测试标题
+                  用例标题
                 </th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   状态
@@ -211,7 +211,7 @@
       @close="showDeleteModal = false"
     >
       <p class="text-gray-600">
-        确定要删除测试 "{{ selectedTest?.title }}" 吗？此操作不可撤销。
+        确定要删除用例 "{{ selectedTest?.title }}" 吗？此操作不可撤销。
       </p>
       
       <template #footer>
@@ -319,7 +319,7 @@ const confirmDelete = async () => {
 
 const handleGenerateReport = (testId: string) => {
   // TODO: 实现生成报告功能
-  alert(`生成测试报告功能开发中... (测试ID: ${testId})`)
+  alert(`生成用例报告功能开发中... (用例ID: ${testId})`)
 }
 
 onMounted(() => {

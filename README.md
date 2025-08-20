@@ -1,317 +1,178 @@
-# 易测平台 (EasyTest Platform)
+# 易测平台 - 智能化测试解决方案
 
-> 智能化测试解决方案 - 通过自然语言描述测试需求，系统自动解析、生成可执行脚本、执行录屏并存储结果
+## 项目简介
 
-## 🚀 项目概述
+易测平台是一个基于Vue 3 + Node.js的智能化测试管理系统，提供测试用例管理、测试计划管理、自动化测试执行等功能。
 
-易测平台是一个基于AI的智能化测试解决方案，旨在让测试变得简单高效。用户只需用自然语言描述测试需求，系统就能自动解析、生成可执行脚本、执行录屏并存储结果。
+## 功能特性
 
-### ✨ 核心特性
+### 核心功能
+- **测试用例管理**: 支持创建、编辑、删除测试用例，支持目录层级管理
+- **测试计划管理**: 支持创建测试计划，关联测试用例，跟踪执行进度
+- **自动化测试**: 基于Playwright的自动化测试执行
+- **AI智能分析**: 集成AI模型进行测试结果分析和建议
+- **视频测试**: 支持视频上传和AI分析
 
-- **🤖 智能需求解析**: 使用自然语言描述测试需求，AI大模型自动解析转化为结构化测试步骤
-- **⚡ 自动脚本生成**: 基于Playwright自动生成可执行的浏览器操作脚本，无需手动编写代码
-- **📹 录屏与结果管理**: 执行测试时同步录屏，完整记录测试过程，便于问题定位和结果分析
-- **👥 用户管理系统**: 完整的用户注册、登录、权限管理功能
-- **📊 测试记录管理**: 查看历史测试记录、结果分析和录屏回放
+### 新增功能 - 关联用例范围
 
-## 🏗️ 项目架构
+#### 功能概述
+关联用例范围功能提供了完整的测试用例层级展示和管理界面，支持"目录1-目录2-用例"的层级结构展示。
+
+#### 主要特性
+1. **层级展示**: 支持多级目录结构，清晰展示用例归属关系
+2. **展开/收起**: 支持目录的展开和收起操作，提供全部展开/全部收起功能
+3. **表格展示**: 以表格形式展示用例详细信息，包含：
+   - 用例名称
+   - 需求状态
+   - 用例等级
+   - 用例状态
+   - 用例负责人
+   - 最终结果
+   - 执行次数
+   - 关联的Bug
+   - 最后执行人
+   - 最后执行时间
+
+4. **批量操作**: 支持批量选择、批量分配、批量更新状态等操作
+5. **筛选搜索**: 支持按状态、等级筛选，支持用例名称搜索
+6. **统计信息**: 实时显示通过、不通过、阻塞、未执行的用例数量和进度
+
+#### 访问方式
+- 在测试计划列表页面点击"关联用例"按钮
+- 在测试计划详情页面点击"查看关联用例"按钮
+- 直接访问 `/dashboard/test-plan/:id/related-cases` 路由
+
+#### 技术实现
+- **前端组件**: `HierarchicalTestCaseTable.vue` - 层级表格组件
+- **页面组件**: `TestPlanRelatedCases.vue` - 关联用例页面
+- **后端API**: `/api/test-plans/:id/related-cases` - 获取关联用例数据
+- **数据结构**: 基于 `directoryPath` 数组构建层级关系
+
+## 技术栈
+
+### 前端
+- Vue 3 (Composition API)
+- TypeScript
+- Tailwind CSS
+- Vite
+- Pinia (状态管理)
+
+### 后端
+- Node.js
+- Express.js
+- MongoDB (Mongoose)
+- JWT认证
+- Playwright (自动化测试)
+
+## 快速开始
+
+### 环境要求
+- Node.js 16+
+- MongoDB 4.4+
+
+### 安装依赖
+```bash
+# 安装前端依赖
+cd frontend
+npm install
+
+# 安装后端依赖
+cd ../backend
+npm install
+```
+
+### 环境配置
+```bash
+# 后端环境配置
+cd backend
+cp env.example .env
+# 编辑 .env 文件，配置数据库连接等信息
+
+# 前端环境配置
+cd frontend
+# 编辑 vite.config.ts 中的代理配置
+```
+
+### 启动服务
+```bash
+# 启动后端服务
+cd backend
+npm run dev
+
+# 启动前端服务
+cd frontend
+npm run dev
+```
+
+### 访问应用
+- 前端: http://localhost:5173
+- 后端API: http://localhost:3000
+
+## 项目结构
 
 ```
 easyTest/
-├── frontend/                 # Vue.js前端应用
+├── frontend/                 # 前端项目
 │   ├── src/
-│   │   ├── components/      # Vue组件
-│   │   │   ├── base/       # 基础UI组件
-│   │   │   └── layout/     # 布局组件
-│   │   ├── views/          # 页面组件
-│   │   │   ├── dashboard/  # 仪表板页面
-│   │   │   └── ...         # 其他页面
-│   │   ├── stores/         # Pinia状态管理
-│   │   ├── router/         # Vue Router路由
-│   │   ├── services/       # API服务
-│   │   ├── types/          # TypeScript类型定义
-│   │   └── assets/         # 静态资源
-│   ├── public/             # 公共资源
-│   ├── package.json        # 前端依赖
-│   ├── vite.config.ts      # Vite配置
-│   └── tailwind.config.js  # Tailwind CSS配置
-├── backend/                 # Node.js后端服务
+│   │   ├── components/      # 组件
+│   │   │   ├── base/        # 基础组件
+│   │   │   ├── directory/   # 目录管理组件
+│   │   │   └── testPlan/    # 测试计划组件
+│   │   ├── views/           # 页面
+│   │   ├── stores/          # 状态管理
+│   │   ├── services/        # API服务
+│   │   └── types/           # 类型定义
+│   └── package.json
+├── backend/                  # 后端项目
 │   ├── src/
-│   │   ├── config/         # 配置文件
-│   │   ├── models/         # 数据模型
-│   │   ├── routes/         # API路由
-│   │   ├── middleware/     # 中间件
-│   │   ├── utils/          # 工具函数
-│   │   └── app.js          # 应用入口
-│   ├── package.json        # 后端依赖
-│   └── .env                # 环境变量
-├── .gitignore              # Git忽略文件
-└── README.md               # 项目文档
+│   │   ├── routes/          # 路由
+│   │   ├── models/          # 数据模型
+│   │   ├── services/        # 业务逻辑
+│   │   └── middleware/      # 中间件
+│   └── package.json
+└── README.md
 ```
 
-## 🛠️ 技术栈
+## 开发指南
 
-### 前端技术栈
-- **框架**: Vue 3.5.12 (Composition API)
-- **构建工具**: Vite 5.4.10
-- **语言**: TypeScript 5.6.2
-- **路由**: Vue Router 4.4.5
-- **状态管理**: Pinia 2.2.4
-- **UI框架**: Tailwind CSS 3.4.14
-- **图标**: Heroicons 2.1.5
-- **HTTP客户端**: Axios
-- **代码质量**: ESLint + Prettier
+### 代码规范
+- 使用TypeScript进行类型检查
+- 遵循Vue 3 Composition API最佳实践
+- 使用ESLint和Prettier进行代码格式化
 
-### 后端技术栈
-- **运行时**: Node.js
-- **框架**: Express.js
-- **数据库**: MongoDB
-- **ODM**: Mongoose
-- **认证**: JWT (JSON Web Token)
-- **密码加密**: bcryptjs
-- **数据验证**: Joi
-- **安全**: helmet, express-rate-limit
-- **日志**: morgan
-- **CORS**: cors
+### 组件开发
+- 基础组件放在 `components/base/` 目录
+- 业务组件按功能模块组织
+- 使用Props和Emits进行组件通信
 
-## 📋 功能特性
+### API开发
+- RESTful API设计
+- 统一的响应格式
+- 完善的错误处理
 
-### 🔐 用户认证系统
-- 用户注册（邮箱、手机号、密码）
-- 用户登录（JWT认证）
-- 密码加密存储
-- 登录历史记录
-- 用户信息管理
+## 部署
 
-### 🧪 测试管理
-- 智能需求解析
-- 自动脚本生成
-- 测试执行监控
-- 录屏功能
-- 结果分析报告
-
-### 📊 数据管理
-- MongoDB数据库
-- 用户数据管理
-- 测试记录存储
-- 登录历史追踪
-
-## 🚀 快速开始
-
-### 环境要求
-- Node.js >= 18.0.0
-- MongoDB >= 4.0
-- npm >= 8.0.0
-
-### 1. 克隆项目
+### 生产环境构建
 ```bash
-git clone <repository-url>
-cd easyTest
-```
-
-### 2. 安装依赖
-
-#### 前端依赖
-```bash
-cd frontend
-npm install
-```
-
-#### 后端依赖
-```bash
-cd backend
-npm install
-```
-
-### 3. 环境配置
-
-#### 后端环境变量
-```bash
-cd backend
-cp env.example .env
-```
-
-编辑 `.env` 文件：
-```env
-# 服务器配置
-PORT=3001
-NODE_ENV=development
-
-# MongoDB配置
-MONGODB_URI=mongodb://localhost:27017/easyTest
-
-# JWT配置
-JWT_SECRET=your_jwt_secret_key
-JWT_EXPIRES_IN=7d
-
-# 安全配置
-BCRYPT_ROUNDS=12
-RATE_LIMIT_WINDOW_MS=900000
-RATE_LIMIT_MAX_REQUESTS=100
-
-# CORS配置
-CORS_ORIGIN=http://localhost:3000
-```
-
-### 4. 启动MongoDB
-```bash
-# macOS (使用Homebrew)
-brew services start mongodb-community
-
-# 或者直接启动
-mongod
-```
-
-### 5. 启动服务
-
-#### 启动后端服务
-```bash
-cd backend
-npm run dev
-```
-后端服务将在 `http://localhost:3001` 启动
-
-#### 启动前端服务
-```bash
-cd frontend
-npm run dev
-```
-前端服务将在 `http://localhost:3000` 启动
-
-### 6. 访问应用
-打开浏览器访问 `http://localhost:3000`
-
-## 📖 使用指南
-
-### 用户注册
-1. 访问首页，点击"注册"按钮
-2. 填写邮箱、手机号、密码等信息
-3. 提交注册表单
-4. 注册成功后自动登录
-
-### 用户登录
-1. 访问登录页面
-2. 输入邮箱和密码
-3. 点击登录按钮
-4. 登录成功后跳转到仪表板
-
-### 演示账户
-- **邮箱**: `test@example.com`
-- **密码**: `Test123!`
-
-## 🔧 开发指南
-
-### 前端开发
-```bash
-cd frontend
-npm run dev          # 启动开发服务器
-npm run build        # 构建生产版本
-npm run preview      # 预览构建结果
-npm run lint         # 代码检查
-```
-
-### 后端开发
-```bash
-cd backend
-npm run dev          # 启动开发服务器
-npm start            # 启动生产服务器
-```
-
-### 数据库操作
-```bash
-# 连接MongoDB
-mongosh
-
-# 查看数据库
-show dbs
-
-# 使用easyTest数据库
-use easyTest
-
-# 查看集合
-show collections
-
-# 查看用户数据
-db.members.find()
-```
-
-## 📡 API文档
-
-### 认证接口
-- `POST /api/auth/register` - 用户注册
-- `POST /api/auth/login` - 用户登录
-- `GET /api/auth/me` - 获取当前用户信息
-- `POST /api/auth/logout` - 用户登出
-- `POST /api/auth/refresh` - 刷新令牌
-- `GET /api/auth/login-history` - 获取登录历史
-
-### 健康检查
-- `GET /api/health` - 服务健康检查
-- `GET /api` - API信息
-
-## 🧪 测试
-
-### 前端测试
-```bash
-cd frontend
-npm run test
-```
-
-### 后端测试
-```bash
-cd backend
-npm test
-```
-
-### API测试
-```bash
-# 健康检查
-curl http://localhost:3001/api/health
-
-# 用户注册
-curl -X POST http://localhost:3001/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "test@example.com",
-    "phone": "13800138000",
-    "password": "Test123!",
-    "confirmPassword": "Test123!"
-  }'
-
-# 用户登录
-curl -X POST http://localhost:3001/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "test@example.com",
-    "password": "Test123!"
-  }'
-```
-
-## 🚀 部署
-
-### 前端部署
-```bash
+# 前端构建
 cd frontend
 npm run build
-# 将 dist/ 目录部署到Web服务器
-```
 
-### 后端部署
-```bash
+# 后端构建
 cd backend
-npm install --production
-npm start
-# 使用PM2或其他进程管理器
+npm run build
 ```
 
-### 环境变量配置
-生产环境需要配置以下环境变量：
-- `NODE_ENV=production`
-- `MONGODB_URI` - 生产数据库连接
-- `JWT_SECRET` - 安全的JWT密钥
-- `CORS_ORIGIN` - 允许的前端域名
+### Docker部署
+```bash
+# 构建镜像
+docker build -t easytest .
 
-## 🤝 贡献指南
+# 运行容器
+docker run -p 3000:3000 easytest
+```
+
+## 贡献指南
 
 1. Fork 项目
 2. 创建功能分支 (`git checkout -b feature/AmazingFeature`)
@@ -319,40 +180,13 @@ npm start
 4. 推送到分支 (`git push origin feature/AmazingFeature`)
 5. 打开 Pull Request
 
-## 📝 开发规范
+## 许可证
 
-### 代码风格
-- 使用ESLint和Prettier保持代码风格一致
-- 遵循TypeScript类型定义
-- 使用Vue 3 Composition API
-- 遵循RESTful API设计原则
+本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。
 
-### 提交规范
-- feat: 新功能
-- fix: 修复bug
-- docs: 文档更新
-- style: 代码格式调整
-- refactor: 代码重构
-- test: 测试相关
-- chore: 构建过程或辅助工具的变动
+## 联系方式
 
-## 📄 许可证
-
-本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情
-
-## 📞 联系方式
-
-- 项目维护者: [Your Name]
-- 邮箱: [your.email@example.com]
-- 项目链接: [https://github.com/your-username/easyTest]
-
-## 🙏 致谢
-
-- Vue.js 团队提供的优秀前端框架
-- Express.js 团队提供的后端框架
-- MongoDB 团队提供的数据库解决方案
-- Tailwind CSS 团队提供的样式框架
-
----
-
-**易测平台** - 让测试变得简单高效 🚀 
+如有问题或建议，请通过以下方式联系：
+- 提交 Issue
+- 发送邮件
+- 项目讨论区 

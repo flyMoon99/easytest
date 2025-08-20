@@ -3,24 +3,24 @@
     <!-- 页面标题 -->
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900">新增测试</h1>
-        <p class="text-gray-600">创建一个新的智能化测试任务</p>
+        <h1 class="text-2xl font-bold text-gray-900">新增用例</h1>
+        <p class="text-gray-600">创建一个新的用例任务</p>
       </div>
       <BaseButton 
         variant="outline"
         @click="router.push('/dashboard/test/records')"
       >
-        查看测试记录
+        查看用例记录
       </BaseButton>
     </div>
 
-    <!-- 测试表单 -->
-    <BaseCard title="测试信息">
+    <!-- 用例表单 -->
+    <BaseCard title="用例信息">
       <form @submit.prevent="handleSubmit" class="space-y-6">
         <BaseInput
           v-model="form.title"
-          label="测试标题"
-          placeholder="请输入测试标题，例如：用户登录功能测试"
+          label="用例标题"
+          placeholder="请输入用例标题，例如：用户登录功能测试"
           required
           :error-message="errors.title"
           @blur="validateTitle"
@@ -29,12 +29,51 @@
         <BaseInput
           v-model="form.entryUrl"
           type="url"
-          label="测试入口URL"
-          placeholder="请输入测试页面的URL，例如：https://example.com/login"
+          label="用例入口URL"
+          placeholder="请输入用例页面的URL，例如：https://example.com/login"
           required
           :error-message="errors.entryUrl"
           @blur="validateEntryUrl"
         />
+
+        <!-- 用例等级选择 -->
+        <div class="space-y-1">
+          <label class="block text-sm font-medium text-gray-700">
+            用例等级
+          </label>
+          <div class="flex space-x-4">
+            <label class="flex items-center">
+              <input
+                type="radio"
+                v-model="form.level"
+                value="高"
+                class="w-4 h-4 text-red-600 bg-gray-100 border-gray-300 focus:ring-red-500"
+              />
+              <span class="ml-2 text-sm text-gray-700">高</span>
+            </label>
+            <label class="flex items-center">
+              <input
+                type="radio"
+                v-model="form.level"
+                value="中"
+                class="w-4 h-4 text-yellow-600 bg-gray-100 border-gray-300 focus:ring-yellow-500"
+              />
+              <span class="ml-2 text-sm text-gray-700">中</span>
+            </label>
+            <label class="flex items-center">
+              <input
+                type="radio"
+                v-model="form.level"
+                value="低"
+                class="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 focus:ring-green-500"
+              />
+              <span class="ml-2 text-sm text-gray-700">低</span>
+            </label>
+          </div>
+          <p class="text-sm text-gray-500">
+            选择用例的重要程度，默认为"中"
+          </p>
+        </div>
 
         <!-- 目录选择 -->
         <div class="space-y-1">
@@ -44,7 +83,7 @@
           </label>
           <div class="border border-gray-300 rounded-lg p-4 bg-gray-50">
             <div v-if="!form.directoryId" class="text-center py-8">
-              <p class="text-gray-500 mb-4">请选择一个目录来组织您的测试用例</p>
+              <p class="text-gray-500 mb-4">请选择一个目录来组织您的用例</p>
               <button
                 type="button"
                 @click="showDirectorySelector = true"
@@ -113,7 +152,7 @@
             {{ errors.description }}
           </p>
           <p class="text-sm text-gray-500">
-            请描述测试流程（至少5个字符），系统将基于您的描述自动生成测试脚本
+            请描述测试流程（至少5个字符）
           </p>
         </div>
 
@@ -156,7 +195,7 @@
     <!-- 使用说明 -->
     <BaseCard title="使用说明">
       <div class="prose max-w-none">
-        <h4 class="text-base font-medium text-gray-900 mb-3">如何编写测试描述？</h4>
+        <h4 class="text-base font-medium text-gray-900 mb-3">如何编写测试用例？</h4>
         <ul class="space-y-2 text-sm text-gray-600">
           <li class="flex items-start space-x-2">
             <span class="w-1.5 h-1.5 bg-primary-600 rounded-full mt-2 flex-shrink-0"></span>
@@ -178,9 +217,9 @@
         
         <h4 class="text-base font-medium text-gray-900 mb-3 mt-6">示例</h4>
         <div class="bg-gray-50 p-4 rounded-lg text-sm">
-          <p class="font-medium text-gray-900 mb-2">测试标题：电商网站商品搜索功能</p>
+          <p class="font-medium text-gray-900 mb-2">用例标题：电商网站商品搜索功能</p>
           <p class="text-gray-700">
-            <strong>测试描述：</strong><br>
+            <strong>用例描述：</strong><br>
             1. 打开网站首页，验证搜索框是否存在<br>
             2. 在搜索框中输入"手机"关键词<br>
             3. 点击搜索按钮或按回车键<br>
@@ -214,7 +253,8 @@ const form = reactive({
   title: '',
   entryUrl: '',
   description: '',
-  directoryId: ''
+  directoryId: '',
+  level: '中' // 默认等级为中
 })
 
 const screenshotFile = ref<File | null>(null)
@@ -226,7 +266,8 @@ const errors = reactive({
   title: '',
   entryUrl: '',
   description: '',
-  directoryId: ''
+  directoryId: '',
+  level: ''
 })
 
 const isFormValid = computed(() => {
@@ -238,17 +279,18 @@ const isFormValid = computed(() => {
     !errors.title && 
     !errors.entryUrl && 
     !errors.description &&
-    !errors.directoryId
+    !errors.directoryId &&
+    !errors.level
   )
 })
 
 const validateTitle = () => {
   if (!form.title) {
-    errors.title = '请输入测试标题'
+    errors.title = '请输入用例标题'
   } else if (form.title.length < 5) {
-    errors.title = '测试标题至少5个字符'
+    errors.title = '用例标题至少5个字符'
   } else if (form.title.length > 100) {
-    errors.title = '测试标题不能超过100个字符'
+    errors.title = '用例标题不能超过100个字符'
   } else {
     errors.title = ''
   }
@@ -256,7 +298,7 @@ const validateTitle = () => {
 
 const validateEntryUrl = () => {
   if (!form.entryUrl) {
-    errors.entryUrl = '请输入测试入口URL'
+    errors.entryUrl = '请输入用例入口URL'
   } else if (!/^https?:\/\/.+/.test(form.entryUrl)) {
     errors.entryUrl = '请输入有效的URL地址'
   } else {
@@ -266,11 +308,11 @@ const validateEntryUrl = () => {
 
 const validateDescription = () => {
   if (!form.description) {
-    errors.description = '请输入测试内容描述'
+    errors.description = '请输入用例内容描述'
   } else if (form.description.length < 5) {
-    errors.description = '测试描述至少5个字符，请详细描述测试步骤'
+    errors.description = '用例描述至少5个字符，请详细描述测试步骤'
   } else if (form.description.length > 2000) {
-    errors.description = '测试描述不能超过2000个字符'
+    errors.description = '用例描述不能超过2000个字符'
   } else {
     errors.description = ''
   }
@@ -298,10 +340,11 @@ const handleSubmit = async () => {
       entryUrl: form.entryUrl,
       description: form.description,
       directoryId: form.directoryId,
+      level: form.level,
       screenshotFile: screenshotFile.value || undefined
     })
     
-    // 创建成功，跳转到测试详情页
+    // 创建成功，跳转到用例详情页
     router.push(`/dashboard/test/detail/${newTest.id}`)
   } catch (error) {
     console.error('Create test failed:', error)
@@ -314,12 +357,14 @@ const handleReset = () => {
   form.entryUrl = ''
   form.description = ''
   form.directoryId = ''
+  form.level = '中'
   screenshotFile.value = null
   fileError.value = ''
   errors.title = ''
   errors.entryUrl = ''
   errors.description = ''
   errors.directoryId = ''
+  errors.level = ''
   tempSelectedDirectory.value = null
 }
 
@@ -372,12 +417,22 @@ const confirmDirectorySelect = () => {
 // 计算属性
 const selectedDirectoryName = computed(() => {
   if (!form.directoryId) return ''
+  // 优先使用临时选中的目录信息
+  if (tempSelectedDirectory.value && tempSelectedDirectory.value.id === form.directoryId) {
+    return tempSelectedDirectory.value.name
+  }
+  // 从store中查找
   const directory = directoryStore.directories.find(d => d.id === form.directoryId)
   return directory?.name || ''
 })
 
 const selectedDirectoryPath = computed(() => {
   if (!form.directoryId) return ''
+  // 优先使用临时选中的目录信息
+  if (tempSelectedDirectory.value && tempSelectedDirectory.value.id === form.directoryId) {
+    return tempSelectedDirectory.value.path
+  }
+  // 从store中查找
   const directory = directoryStore.directories.find(d => d.id === form.directoryId)
   return directory?.path || ''
 })

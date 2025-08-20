@@ -81,6 +81,39 @@ const router = createRouter({
           name: 'directory-management',
           component: () => import('@/views/dashboard/DirectoryManagement.vue'),
           meta: { title: '目录管理 - 易测平台' }
+        },
+        {
+          path: 'test-plan/list',
+          name: 'test-plan-list',
+          component: () => import('@/views/dashboard/TestPlanList.vue'),
+          meta: { title: '测试计划 - 易测平台' }
+        },
+        {
+          path: 'test-plan/new',
+          name: 'test-plan-new',
+          component: () => import('@/views/dashboard/TestPlanNew.vue'),
+          meta: { title: '新增测试计划 - 易测平台' }
+        },
+        {
+          path: 'test-plan/:id',
+          name: 'test-plan-detail',
+          component: () => import('@/views/dashboard/TestPlanDetail.vue'),
+          meta: { title: '测试计划详情 - 易测平台' },
+          props: true
+        },
+        {
+          path: 'test-plan/:id/edit',
+          name: 'test-plan-edit',
+          component: () => import('@/views/dashboard/TestPlanEdit.vue'),
+          meta: { title: '编辑测试计划 - 易测平台' },
+          props: true
+        },
+        {
+          path: 'test-plan/:id/related-cases',
+          name: 'test-plan-related-cases',
+          component: () => import('@/views/dashboard/TestPlanRelatedCases.vue'),
+          meta: { title: '关联用例范围 - 易测平台' },
+          props: true
         }
       ]
     },

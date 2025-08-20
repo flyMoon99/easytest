@@ -17,6 +17,14 @@ const testCaseSchema = new mongoose.Schema({
     index: true
   },
   
+  // 关联测试计划
+  testPlanId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'TestPlan',
+    default: null,
+    index: true
+  },
+  
   // 基础信息
   title: {
     type: String,
@@ -39,6 +47,14 @@ const testCaseSchema = new mongoose.Schema({
     trim: true,
     minlength: [5, '测试描述至少5个字符'],
     maxlength: [2000, '测试描述最多2000个字符']
+  },
+  
+  // 用例等级
+  level: {
+    type: String,
+    enum: ['高', '中', '低'],
+    default: '中',
+    required: false
   },
   
   // 状态管理
@@ -159,6 +175,8 @@ testCaseSchema.index({ status: 1, createdAt: -1 });
 testCaseSchema.index({ memberId: 1, status: 1 });
 testCaseSchema.index({ directoryId: 1, createdAt: -1 });
 testCaseSchema.index({ memberId: 1, directoryId: 1 });
+testCaseSchema.index({ testPlanId: 1, memberId: 1 });
+testCaseSchema.index({ testPlanId: 1, status: 1 });
 
 // 实例方法
 testCaseSchema.methods.updateStatus = function(status, additionalData = {}) {

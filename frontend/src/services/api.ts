@@ -116,6 +116,18 @@ export const testCaseAPI = {
   }> => 
     api.get('/testcases', { params }),
   
+  // 获取所有测试用例（用于选择器）
+  getAll: (params = {}): Promise<{ 
+    success: boolean; 
+    data: { 
+      testCases: TestRecord[]; 
+      pagination: any; 
+      statistics: any 
+    }; 
+    message: string 
+  }> => 
+    api.get('/testcases', { params: { ...params, all: 'true' } }),
+  
   // 获取测试用例详情
   getDetail: (id: string): Promise<{ success: boolean; data: TestRecord; message: string }> => 
     api.get(`/testcases/${id}`),
@@ -143,6 +155,37 @@ export const testCaseAPI = {
   // AI分析（testType 可选，后端可自动检测）
   analyze: (id: string, options: { aiModel: string; testType?: string }): Promise<{ success: boolean; data: AnalyzeResponsePayload; message: string }> => 
     api.post(`/testcases/${id}/analyze`, options)
+}
+
+// 测试计划相关API
+export const testPlanAPI = {
+  // 创建测试计划
+  create: (testPlanData: any): Promise<{ success: boolean; data: any; message: string }> => 
+    api.post('/test-plans', testPlanData),
+  
+  // 获取测试计划列表
+  getList: (params = {}): Promise<{ success: boolean; data: any; message: string }> => 
+    api.get('/test-plans', { params }),
+  
+  // 获取测试计划详情
+  getDetail: (id: string): Promise<{ success: boolean; data: any; message: string }> => 
+    api.get(`/test-plans/${id}`),
+  
+  // 更新测试计划
+  update: (id: string, testPlanData: any): Promise<{ success: boolean; data: any; message: string }> => 
+    api.put(`/test-plans/${id}`, testPlanData),
+  
+  // 删除测试计划
+  delete: (id: string): Promise<{ success: boolean; message: string }> => 
+    api.delete(`/test-plans/${id}`),
+  
+  // 获取关联的测试用例
+  getRelatedCases: (id: string, params = {}): Promise<{ success: boolean; data: any; message: string }> => 
+    api.get(`/test-plans/${id}/related-cases`, { params }),
+  
+  // 关联测试用例到测试计划
+  associateCases: (id: string, caseIds: string[]): Promise<{ success: boolean; data: any; message: string }> => 
+    api.post(`/test-plans/${id}/associate-cases`, { caseIds })
 }
 
 // 通用API

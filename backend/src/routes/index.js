@@ -5,6 +5,7 @@ import videoRoutes from './video.js';
 import aiChatRoutes from './aiChat.js';
 import testResultRoutes from './testResult.js';
 import testCaseDirectoryRoutes from './testCaseDirectory.js';
+import testPlanRoutes from './testPlan.js';
 import { successResponse } from '../utils/response.js';
 
 const router = express.Router();
@@ -35,6 +36,7 @@ router.get('/', (req, res) => {
       auth: '/api/auth',
       testcases: '/api/testcases',
       'test-directories': '/api/test-directories',
+      'test-plans': '/api/test-plans',
       videos: '/api/videos',
       'test-results': '/api/test-results',
       'ai-chat': '/api/ai-chat',
@@ -61,5 +63,8 @@ router.use('/ai-chat', aiChatRoutes);
 
 // 测试结果路由
 router.use('/test-results', testResultRoutes);
+
+// 测试计划路由
+router.use('/test-plans', testPlanRoutes);
 
 export default router;

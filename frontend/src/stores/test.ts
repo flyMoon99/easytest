@@ -36,6 +36,9 @@ export const useTestStore = defineStore('test', () => {
         fd.append('entryUrl', testData.entryUrl)
         fd.append('description', testData.description)
         fd.append('directoryId', testData.directoryId)
+        if (testData.level) {
+          fd.append('level', testData.level)
+        }
         const file = (testData as any).screenshotFile as File
         if (file) fd.append('screenshot', file)
         response = await testCaseAPI.createWithImage(fd)
