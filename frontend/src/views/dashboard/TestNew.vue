@@ -90,13 +90,7 @@
                 variant="outline"
                 @click="showDirectorySelector = false"
               >
-                取消
-              </BaseButton>
-              <BaseButton
-                @click="confirmDirectorySelect"
-                :disabled="!form.directoryId"
-              >
-                确认选择
+                关闭
               </BaseButton>
             </div>
           </template>
@@ -354,11 +348,17 @@ const onFileChange = (e: Event) => {
 
 // 目录选择相关方法
 const handleDirectorySelect = (directory: any) => {
+  // 立即选中目录，无需确认
+  form.directoryId = directory.id
   tempSelectedDirectory.value = {
     id: directory.id,
     name: directory.name,
     path: directory.path
   }
+  // 关闭弹窗
+  showDirectorySelector.value = false
+  // 清除错误
+  errors.directoryId = ''
 }
 
 const confirmDirectorySelect = () => {
