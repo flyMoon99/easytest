@@ -4,6 +4,7 @@ import testCaseRoutes from './testCase.js';
 import videoRoutes from './video.js';
 import aiChatRoutes from './aiChat.js';
 import testResultRoutes from './testResult.js';
+import testCaseDirectoryRoutes from './testCaseDirectory.js';
 import { successResponse } from '../utils/response.js';
 
 const router = express.Router();
@@ -33,8 +34,10 @@ router.get('/', (req, res) => {
     endpoints: {
       auth: '/api/auth',
       testcases: '/api/testcases',
+      'test-directories': '/api/test-directories',
       videos: '/api/videos',
       'test-results': '/api/test-results',
+      'ai-chat': '/api/ai-chat',
       health: '/api/health'
     },
     documentation: 'API文档待完善'
@@ -46,6 +49,9 @@ router.use('/auth', authRoutes);
 
 // 测试用例路由
 router.use('/testcases', testCaseRoutes);
+
+// 用例目录路由
+router.use('/test-directories', testCaseDirectoryRoutes);
 
 // 视频管理路由
 router.use('/videos', videoRoutes);

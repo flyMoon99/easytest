@@ -75,6 +75,12 @@ const router = createRouter({
           name: 'ai-chat',
           component: () => import('@/views/dashboard/AiChat.vue'),
           meta: { title: 'AI对话 - 易测平台' }
+        },
+        {
+          path: 'directories',
+          name: 'directory-management',
+          component: () => import('@/views/dashboard/DirectoryManagement.vue'),
+          meta: { title: '目录管理 - 易测平台' }
         }
       ]
     },

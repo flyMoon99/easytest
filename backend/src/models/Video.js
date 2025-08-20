@@ -18,15 +18,6 @@ const videoSchema = new mongoose.Schema({
     maxlength: [200, '视频名称最多200个字符']
   },
   
-  // 测试说明
-  testDescription: {
-    type: String,
-    required: [true, '测试说明是必填项'],
-    trim: true,
-    minlength: [10, '测试说明至少10个字符'],
-    maxlength: [500, '测试说明最多500个字符']
-  },
-  
   // 文件信息
   originalName: {
     type: String,
@@ -86,10 +77,31 @@ const videoSchema = new mongoose.Schema({
       type: Number,
       default: 0
     },
-    // Gemini解析返回的文本结果
-    geminiText: {
-      type: String,
-      default: ''
+    // Gemini分析结果
+    geminiAnalysis: {
+      summary: String,
+      testAnalysis: {
+        functionalIssues: [{
+          issue: String,
+          severity: {
+            type: String,
+            enum: ['high', 'medium', 'low'],
+            default: 'medium'
+          },
+          impact: String,
+          recommendation: String
+        }],
+        uiIssues: [{
+          issue: String,
+          severity: {
+            type: String,
+            enum: ['high', 'medium', 'low'],
+            default: 'medium'
+          },
+          impact: String,
+          recommendation: String
+        }]
+      }
     }
   },
   

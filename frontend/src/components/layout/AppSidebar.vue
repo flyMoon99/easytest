@@ -57,6 +57,22 @@
           </svg>
           测试记录
         </router-link>
+
+        <router-link
+          to="/dashboard/directories"
+          :class="[
+            'flex items-center px-6 py-2 text-sm rounded-lg transition-colors ml-8',
+            $route.name === 'directory-management'
+              ? 'bg-primary-50 text-primary-700'
+              : 'text-gray-600 hover:bg-gray-50'
+          ]"
+        >
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v14l-4-2-4 2V5z" />
+          </svg>
+          目录管理
+        </router-link>
       </div>
 
       <!-- 视频管理 -->

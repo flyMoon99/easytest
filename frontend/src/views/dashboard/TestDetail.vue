@@ -292,7 +292,7 @@
 
     <!-- 删除确认模态框 -->
     <BaseModal
-      :show="showDeleteModal"
+      v-model="showDeleteModal"
       title="确认删除"
       @close="showDeleteModal = false"
     >

@@ -1,6 +1,7 @@
 export * from './auth'
 export * from './test'
 export * from './api'
+export * from './directory'
 
 // 通用类型定义
 export interface SelectOption {

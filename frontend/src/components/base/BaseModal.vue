@@ -9,7 +9,7 @@
       leave-to-class="opacity-0"
     >
       <div
-        v-if="show"
+        v-if="props.modelValue"
         class="fixed inset-0 z-50 overflow-y-auto"
         @click="handleBackdropClick"
       >
@@ -27,7 +27,7 @@
             leave-to-class="opacity-0 scale-95"
           >
             <div
-              v-if="show"
+              v-if="props.modelValue"
               :class="modalClasses"
               @click.stop
             >
@@ -72,7 +72,7 @@
 import { computed, watch } from 'vue'
 
 interface Props {
-  show: boolean
+  modelValue: boolean
   title?: string
   size?: 'sm' | 'md' | 'lg' | 'xl'
   closeOnBackdrop?: boolean
@@ -86,6 +86,7 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const emit = defineEmits<{
+  'update:modelValue': [value: boolean]
   close: []
 }>()
 
@@ -112,6 +113,7 @@ const modalClasses = computed(() => {
 })
 
 const handleClose = () => {
+  emit('update:modelValue', false)
   emit('close')
 }
 
@@ -122,7 +124,7 @@ const handleBackdropClick = () => {
 }
 
 // 监听ESC键
-watch(() => props.show, (newShow) => {
+watch(() => props.modelValue, (newShow) => {
   if (newShow) {
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
