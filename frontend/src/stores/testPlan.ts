@@ -5,7 +5,6 @@ import type {
   CreateTestPlanForm,
   UpdateTestPlanForm,
   TestPlanQueryParams,
-  TestPlanListResponse,
   TestPlanStatistics
 } from '@/types/testPlan'
 import { testPlanAPI } from '@/services/testPlanApi'
@@ -48,13 +47,45 @@ export const useTestPlanStore = defineStore('testPlan', () => {
       error.value = null
       
       const response = await testPlanAPI.getList(params)
-      testPlans.value = response.data.testPlans
-      pagination.value = response.data.pagination
-      statistics.value = response.data.statistics
+      
+      // 添加安全检查
+      if (!response || !response.data) {
+        throw new Error('API响应格式错误')
+      }
+      
+      testPlans.value = response.data.testPlans || []
+      pagination.value = response.data.pagination || {
+        page: 1,
+        limit: 10,
+        total: 0,
+        totalPages: 0
+      }
+      statistics.value = response.data.statistics || {
+        total: 0,
+        draft: 0,
+        active: 0,
+        completed: 0,
+        cancelled: 0
+      }
       
       return response.data
     } catch (err) {
       error.value = err instanceof Error ? err.message : '获取测试计划列表失败'
+      // 设置默认值
+      testPlans.value = []
+      pagination.value = {
+        page: 1,
+        limit: 10,
+        total: 0,
+        totalPages: 0
+      }
+      statistics.value = {
+        total: 0,
+        draft: 0,
+        active: 0,
+        completed: 0,
+        cancelled: 0
+      }
       throw err
     } finally {
       loading.value = false
@@ -70,11 +101,18 @@ export const useTestPlanStore = defineStore('testPlan', () => {
       error.value = null
       
       const response = await testPlanAPI.getDetail(id)
+      
+      // 添加安全检查
+      if (!response || !response.data) {
+        throw new Error('API响应格式错误')
+      }
+      
       currentTestPlan.value = response.data
       
       return response.data
     } catch (err) {
       error.value = err instanceof Error ? err.message : '获取测试计划详情失败'
+      currentTestPlan.value = null
       throw err
     } finally {
       loading.value = false

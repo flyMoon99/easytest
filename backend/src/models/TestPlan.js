@@ -201,13 +201,14 @@ testPlanSchema.statics.getTestPlanList = async function(memberId, options = {}) 
   const skip = (page - 1) * limit;
   const sort = { [sortBy]: sortOrder === 'desc' ? -1 : 1 };
 
-  const [testPlans, total] = await Promise.all([
+  const [testPlans, total, statistics] = await Promise.all([
     this.find(query)
       .sort(sort)
       .skip(skip)
       .limit(limit)
       .lean(),
-    this.countDocuments(query)
+    this.countDocuments(query),
+    this.getTestPlanStatistics(memberId)
   ]);
 
   // 转换数据格式
@@ -224,7 +225,8 @@ testPlanSchema.statics.getTestPlanList = async function(memberId, options = {}) 
       limit,
       total,
       totalPages: Math.ceil(total / limit)
-    }
+    },
+    statistics
   };
 };
 
