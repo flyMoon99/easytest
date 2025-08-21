@@ -1,6 +1,7 @@
 <template>
   <BaseModal
-    v-model="modelValue"
+    :model-value="modelValue"
+    @update:model-value="$emit('update:modelValue', $event)"
     title="PW测试执行"
     size="lg"
     :loading="loading"
