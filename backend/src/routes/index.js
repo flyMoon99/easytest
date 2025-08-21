@@ -6,6 +6,7 @@ import aiChatRoutes from './aiChat.js';
 import testResultRoutes from './testResult.js';
 import testCaseDirectoryRoutes from './testCaseDirectory.js';
 import testPlanRoutes from './testPlan.js';
+import pwTestRoutes from './pwTest.js';
 import { successResponse } from '../utils/response.js';
 
 const router = express.Router();
@@ -40,6 +41,7 @@ router.get('/', (req, res) => {
       videos: '/api/videos',
       'test-results': '/api/test-results',
       'ai-chat': '/api/ai-chat',
+      'pw-test': '/api/pw-test',
       health: '/api/health'
     },
     documentation: 'API文档待完善'
@@ -66,5 +68,8 @@ router.use('/test-results', testResultRoutes);
 
 // 测试计划路由
 router.use('/test-plans', testPlanRoutes);
+
+// PW测试路由
+router.use('/pw-test', pwTestRoutes);
 
 export default router;

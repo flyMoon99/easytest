@@ -206,6 +206,13 @@
             >
               执行
             </button>
+            <button
+              @click="handlePWTest(item)"
+              class="px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded hover:bg-purple-200 transition-colors"
+              title="PW测试"
+            >
+              PW测试
+            </button>
           </div>
         </div>
       </div>
@@ -275,6 +282,7 @@ const emit = defineEmits<{
   selectionChange: [selectedCases: TestCase[]]
   uploadVideo: [testCase: any]
   execute: [testCase: any]
+  pwTest: [testCase: any]
 }>()
 
 // 构建树形数据
@@ -507,6 +515,10 @@ const handleUploadVideo = (testCase: any) => {
 
 const handleExecute = (testCase: any) => {
   emit('execute', testCase)
+}
+
+const handlePWTest = (testCase: any) => {
+  emit('pwTest', testCase)
 }
 
 // 暴露方法给父组件

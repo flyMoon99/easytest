@@ -215,6 +215,7 @@
           @selection-change="handleSelectionChange"
           @upload-video="handleUploadVideo"
           @execute="handleExecuteSingle"
+          @pw-test="handlePWTest"
         />
       </BaseCard>
 
@@ -262,6 +263,13 @@
     :test-plan-id="testPlanId"
     @success="handleExecuteSuccess"
   />
+
+  <!-- PW测试弹窗 -->
+  <PWTestModal
+    v-model="showPWTestModal"
+    :test-case="currentTestCase"
+    @success="handlePWTestSuccess"
+  />
 </template>
 
 <script setup lang="ts">
@@ -275,6 +283,7 @@ import BaseInput from '@/components/base/BaseInput.vue'
 import HierarchicalTestCaseTable from '@/components/testPlan/HierarchicalTestCaseTable.vue'
 import SelectTestCasesModal from '@/components/testPlan/SelectTestCasesModal.vue'
 import ExecuteTestCaseModal from '@/components/testPlan/ExecuteTestCaseModal.vue'
+import PWTestModal from '@/components/testPlan/PWTestModal.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -295,6 +304,9 @@ const showSelectModal = ref(false)
 // 执行用例弹窗
 const showExecuteModal = ref(false)
 const currentTestCase = ref<any>(null)
+
+// PW测试弹窗
+const showPWTestModal = ref(false)
 
 // 计算属性
 const currentTestPlan = computed(() => testPlanStore.currentTestPlan)
@@ -451,6 +463,34 @@ const handleExecuteSingle = (testCase: any) => {
   }
   currentTestCase.value = testCase
   showExecuteModal.value = true
+}
+
+const handlePWTest = (testCase: any) => {
+  console.log('PW测试用例:', testCase)
+  // 确保testCase存在且有效
+  if (!testCase || !testCase.testCaseId) {
+    console.error('无效的测试用例:', testCase)
+    return
+  }
+  currentTestCase.value = testCase
+  showPWTestModal.value = true
+}
+
+const handlePWTestSuccess = async (data: any) => {
+  try {
+    loading.value = true
+    console.log('PW测试成功，数据:', data)
+    
+    // 重新加载关联用例以获取最新的PW测试状态
+    await loadRelatedCases()
+    
+    // 显示成功消息
+    console.log('PW测试执行成功')
+  } catch (error) {
+    console.error('PW测试执行失败:', error)
+  } finally {
+    loading.value = false
+  }
 }
 
 const handleExecuteSuccess = async (data: any) => {

@@ -98,7 +98,90 @@ const QWEN_PROMPTS = {
   ]
 }
 
-注意：必须返回有效的JSON格式，不要添加任何额外文本。`
+注意：必须返回有效的JSON格式，不要添加任何额外文本。`,
+
+  // 自然语言理解分析提示词
+  nlu_analysis: `你是一个专业的测试用例分析专家。请分析以下测试用例的自然语言描述，提取关键信息并理解测试意图。
+
+测试描述：{testDescription}
+
+请按照以下要求进行分析：
+1. 理解测试用例的主要目标和预期结果
+2. 识别需要执行的主要操作步骤
+3. 分析测试类型和复杂度
+4. 评估测试的优先级和重要性
+5. 识别可能的风险点和注意事项
+
+请严格按照以下JSON格式返回结果：
+
+{
+  "testObjective": "测试的主要目标",
+  "mainActions": [
+    {
+      "action": "操作类型（如click、fill、navigate等）",
+      "target": "操作目标",
+      "expectedResult": "预期结果"
+    }
+  ],
+  "testType": "测试类型（functional、ui、navigation、form、api、performance）",
+  "complexity": "复杂度（low、medium、high）",
+  "estimatedDuration": 30,
+  "priority": "优先级（high、medium、low）",
+  "riskPoints": ["潜在风险点1", "潜在风险点2"],
+  "prerequisites": ["前置条件1", "前置条件2"]
+}
+
+注意：
+1. 必须返回有效的JSON格式
+2. 不要添加任何markdown标记
+3. 不要添加任何额外的说明文字
+4. 确保JSON格式完全正确`,
+
+  // 代码生成提示词
+  code_generation: `你是一个专业的Playwright测试代码生成专家。请根据测试用例描述生成完整的Playwright测试代码。
+
+测试描述：{testDescription}
+
+请按照以下要求生成代码：
+1. 生成完整的Playwright测试脚本
+2. 包含适当的错误处理和重试机制
+3. 添加详细的注释说明
+4. 使用稳定的元素选择器
+5. 包含页面加载等待和元素等待
+6. 添加适当的断言验证
+7. 考虑测试的健壮性和可维护性
+
+请严格按照以下JSON格式返回结果：
+
+{
+  "analysis": "代码生成分析",
+  "playwrightScripts": [
+    {
+      "step": 1,
+      "description": "步骤描述",
+      "action": "playwright方法名",
+      "selector": "元素选择器",
+      "value": "输入值",
+      "explanation": "操作说明"
+    }
+  ],
+  "fullCode": "完整的Playwright测试代码",
+  "testFunction": "测试函数代码",
+  "setupCode": "设置代码",
+  "teardownCode": "清理代码",
+  "dependencies": ["依赖项列表"],
+  "codeQuality": {
+    "score": 85,
+    "suggestions": ["优化建议1", "优化建议2"]
+  }
+}
+
+注意：
+1. 必须返回有效的JSON格式
+2. 生成的代码必须是可执行的Playwright代码
+3. 包含完整的错误处理机制
+4. 代码应该具有良好的可读性和可维护性
+5. 确保JSON格式完全正确`
 };
 
 // ChatGPT Vision提示词模板
