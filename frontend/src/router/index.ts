@@ -56,7 +56,11 @@ const router = createRouter({
           path: 'video/new',
           name: 'video-new',
           component: () => import('@/views/dashboard/VideoNew.vue'),
-          meta: { title: '新增视频 - 易测平台' }
+          meta: { title: '新增视频 - 易测平台' },
+          props: (route) => ({
+            testPlanId: route.query.testPlanId as string,
+            testCaseId: route.query.testCaseId as string
+          })
         },
         {
           path: 'video/list',
@@ -129,6 +133,11 @@ const router = createRouter({
 // 路由守卫
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
+  
+  // 初始化认证状态
+  if (!authStore.isAuthenticated) {
+    authStore.initializeAuth()
+  }
   
   // 设置页面标题
   if (to.meta?.title) {

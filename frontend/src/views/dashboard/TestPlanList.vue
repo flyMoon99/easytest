@@ -20,23 +20,23 @@
     <!-- 统计卡片 -->
     <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
       <BaseCard class="text-center">
-        <div class="text-2xl font-bold text-gray-900">{{ statistics.total }}</div>
+        <div class="text-2xl font-bold text-gray-900">{{ statistics?.total || 0 }}</div>
         <div class="text-sm text-gray-600">总计划数</div>
       </BaseCard>
       <BaseCard class="text-center">
-        <div class="text-2xl font-bold text-gray-600">{{ statistics.draft }}</div>
+        <div class="text-2xl font-bold text-gray-600">{{ statistics?.draft || 0 }}</div>
         <div class="text-sm text-gray-600">草稿</div>
       </BaseCard>
       <BaseCard class="text-center">
-        <div class="text-2xl font-bold text-blue-600">{{ statistics.active }}</div>
+        <div class="text-2xl font-bold text-blue-600">{{ statistics?.active || 0 }}</div>
         <div class="text-sm text-gray-600">进行中</div>
       </BaseCard>
       <BaseCard class="text-center">
-        <div class="text-2xl font-bold text-green-600">{{ statistics.completed }}</div>
+        <div class="text-2xl font-bold text-green-600">{{ statistics?.completed || 0 }}</div>
         <div class="text-sm text-gray-600">已完成</div>
       </BaseCard>
       <BaseCard class="text-center">
-        <div class="text-2xl font-bold text-red-600">{{ statistics.cancelled }}</div>
+        <div class="text-2xl font-bold text-red-600">{{ statistics?.cancelled || 0 }}</div>
         <div class="text-sm text-gray-600">已取消</div>
       </BaseCard>
     </div>
@@ -211,26 +211,26 @@
     </div>
 
     <!-- 分页 -->
-    <div v-if="pagination.totalPages > 1" class="flex justify-center">
+    <div v-if="pagination?.totalPages > 1" class="flex justify-center">
       <nav class="flex items-center space-x-2">
         <BaseButton
           variant="outline"
           size="sm"
-          :disabled="pagination.page <= 1"
-          @click="handlePageChange(pagination.page - 1)"
+          :disabled="pagination?.page <= 1"
+          @click="handlePageChange(pagination?.page - 1)"
         >
           上一页
         </BaseButton>
         
         <span class="text-sm text-gray-600">
-          第 {{ pagination.page }} 页，共 {{ pagination.totalPages }} 页
+          第 {{ pagination?.page || 1 }} 页，共 {{ pagination?.totalPages || 1 }} 页
         </span>
         
         <BaseButton
           variant="outline"
           size="sm"
-          :disabled="pagination.page >= pagination.totalPages"
-          @click="handlePageChange(pagination.page + 1)"
+          :disabled="pagination?.page >= pagination?.totalPages"
+          @click="handlePageChange(pagination?.page + 1)"
         >
           下一页
         </BaseButton>
@@ -342,8 +342,8 @@ const confirmDelete = async () => {
 
 const loadTestPlans = async (params: any = {}) => {
   const queryParams: any = {
-    page: pagination.value.page,
-    limit: pagination.value.limit,
+    page: pagination.value?.page || 1,
+    limit: pagination.value?.limit || 10,
     ...params
   }
   

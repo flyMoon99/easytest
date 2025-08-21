@@ -13,14 +13,7 @@ export const useTestStore = defineStore('test', () => {
   // 计算属性 - 统计数据
   const statistics = computed((): TestStatistics => {
     const total = testRecords.value.length
-    const pending = testRecords.value.filter(t => t.status === 'pending').length
-    const screened = testRecords.value.filter(t => t.status === 'screened').length
-    const analyzed = testRecords.value.filter(t => t.status === 'analyzed').length
-    const completed = testRecords.value.filter(t => t.status === 'completed').length
-    const failed = testRecords.value.filter(t => t.status === 'failed').length
-    const successRate = total > 0 ? Math.round((completed / total) * 100) : 0
-
-    return { total, pending, screened, analyzed, completed, failed, successRate }
+    return { total }
   })
 
   // 创建测试
@@ -46,15 +39,8 @@ export const useTestStore = defineStore('test', () => {
         response = await testCaseAPI.create(testData)
       }
       const newTest = response.data
-      // 若携带了截图且后端状态非 screened，则在前端兜底为 screened
-      if ((testData as any).screenshotFile && newTest?.screenshotUrl && newTest.status !== 'screened') {
-        newTest.status = 'screened'
-      }
       
       testRecords.value.unshift(newTest)
-      
-      // 注意：移除了自动的状态更新，让用户手动控制测试执行
-      // 如果需要自动执行，可以在特定条件下启用
       
       return newTest
     } catch (err: any) {
@@ -132,16 +118,18 @@ export const useTestStore = defineStore('test', () => {
     }
   }
 
-  // 更新测试状态
-  const updateTestStatus = async (id: string, status: TestRecord['status'], additionalData?: any) => {
+  // 更新测试用例
+  const updateTest = async (id: string, testData: Partial<TestForm>) => {
+    loading.value = true
+    error.value = null
+    
     try {
-      const statusData = { status, ...additionalData }
-      const response = await testCaseAPI.updateStatus(id, statusData)
+      const response = await testCaseAPI.update(id, testData)
       
       // 更新本地数据
-      const test = testRecords.value.find(t => t.id === id)
-      if (test) {
-        Object.assign(test, response.data)
+      const index = testRecords.value.findIndex(t => t.id === id)
+      if (index > -1) {
+        testRecords.value[index] = response.data
       }
       
       if (currentTest.value?.id === id) {
@@ -150,19 +138,64 @@ export const useTestStore = defineStore('test', () => {
       
       return response.data
     } catch (err: any) {
-      // 如果API调用失败，仍然更新本地状态
-      const test = testRecords.value.find(t => t.id === id)
-      if (test) {
-        test.status = status
-        test.updatedAt = new Date().toISOString()
-        if (status === 'completed' || status === 'failed') {
-          test.completedAt = new Date().toISOString()
-        }
-        if (additionalData) {
-          Object.assign(test, additionalData)
-        }
+      error.value = err.message || '更新测试失败'
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // 执行测试
+  const executeTest = async (id: string) => {
+    loading.value = true
+    error.value = null
+    
+    try {
+      const response = await testCaseAPI.execute(id)
+      
+      // 更新本地数据
+      const index = testRecords.value.findIndex(t => t.id === id)
+      if (index > -1) {
+        testRecords.value[index] = response.data
       }
-      console.warn('更新测试状态API调用失败，使用本地更新:', err)
+      
+      if (currentTest.value?.id === id) {
+        currentTest.value = response.data
+      }
+      
+      return response.data
+    } catch (err: any) {
+      error.value = err.message || '执行测试失败'
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // AI分析（支持后端自动检测测试类型）
+  const analyzeTest = async (id: string, options: { aiModel: string; testType?: string }) => {
+    loading.value = true
+    error.value = null
+    
+    try {
+      const response = await testCaseAPI.analyze(id, options)
+      
+      // 更新本地数据
+      const index = testRecords.value.findIndex(t => t.id === id)
+      if (index > -1) {
+        testRecords.value[index] = response.data.testCase
+      }
+      
+      if (currentTest.value?.id === id) {
+        currentTest.value = response.data.testCase
+      }
+      
+      return response.data
+    } catch (err: any) {
+      error.value = err.message || 'AI分析失败'
+      throw err
+    } finally {
+      loading.value = false
     }
   }
 
@@ -228,10 +261,6 @@ export const useTestStore = defineStore('test', () => {
 
     test.playwrightScripts = mockScripts
     test.videoUrl = `/mock-video/${testId}-full.mp4`
-    test.duration = 15000
-
-    // 注意：移除了自动的状态更新，让用户手动控制测试执行
-    // 如果需要自动执行，可以在特定条件下启用
   }
 
   // 初始化模拟数据
@@ -243,7 +272,6 @@ export const useTestStore = defineStore('test', () => {
         entryUrl: 'https://example.com/login',
         description: '测试用户登录流程，包括邮箱验证、密码验证和登录状态检查',
         directoryId: 'mock-directory-1',
-        status: 'pending',
         createdAt: '2025-01-13T10:30:00Z',
         playwrightScripts: [],
         userId: '1'
@@ -254,7 +282,6 @@ export const useTestStore = defineStore('test', () => {
         entryUrl: 'https://example.com/products',
         description: '测试商品搜索、筛选和排序功能',
         directoryId: 'mock-directory-2',
-        status: 'pending',
         createdAt: '2025-01-13T14:20:00Z',
         playwrightScripts: [],
         userId: '1'
@@ -265,7 +292,6 @@ export const useTestStore = defineStore('test', () => {
         entryUrl: 'https://example.com/cart',
         description: '测试添加商品到购物车、修改数量、删除商品等操作',
         directoryId: 'mock-directory-3',
-        status: 'pending',
         createdAt: '2025-01-14T09:15:00Z',
         playwrightScripts: [],
         userId: '1'
@@ -275,118 +301,23 @@ export const useTestStore = defineStore('test', () => {
     testRecords.value = mockTests
   }
 
-  // 更新测试用例
-  const updateTest = async (id: string, testData: Partial<TestForm>) => {
-    loading.value = true
-    error.value = null
-    
-    try {
-      const response = await testCaseAPI.update(id, testData)
-      
-      // 更新本地数据
-      const index = testRecords.value.findIndex(t => t.id === id)
-      if (index > -1) {
-        testRecords.value[index] = response.data
-      }
-      
-      if (currentTest.value?.id === id) {
-        currentTest.value = response.data
-      }
-      
-      return response.data
-    } catch (err: any) {
-      error.value = err.message || '更新测试失败'
-      throw err
-    } finally {
-      loading.value = false
-    }
-  }
-
-  // 执行测试
-  const executeTest = async (id: string) => {
-    loading.value = true
-    error.value = null
-    
-    try {
-      const response = await testCaseAPI.execute(id)
-      
-      // 更新本地数据
-      const index = testRecords.value.findIndex(t => t.id === id)
-      if (index > -1) {
-        testRecords.value[index] = response.data
-      }
-      
-      if (currentTest.value?.id === id) {
-        currentTest.value = response.data
-      }
-      
-      return response.data
-    } catch (err: any) {
-      error.value = err.message || '执行测试失败'
-      throw err
-    } finally {
-      loading.value = false
-    }
-  }
-
-  // AI分析（支持后端自动检测测试类型）
-  const analyzeTest = async (id: string, options: { aiModel: string; testType?: string }) => {
-    loading.value = true
-    error.value = null
-    
-    try {
-      const response = await testCaseAPI.analyze(id, options)
-      const payload = response.data as AnalyzeResponsePayload | any
-      const updated = payload?.testCase ?? payload
-
-      // 写回本地列表
-      const index = testRecords.value.findIndex(t => t.id === id)
-      if (index > -1) {
-        testRecords.value[index] = updated
-      }
-
-      // 写回当前详情
-      if (currentTest.value?.id === id) {
-        currentTest.value = updated
-      }
-
-      if (!payload?.testCase) {
-        console.warn('analyze 返回结构与预期不一致，已使用降级数据写回:', payload)
-      }
-
-      return updated
-    } catch (err: any) {
-      error.value = err.message || 'AI分析失败'
-      throw err
-    } finally {
-      loading.value = false
-    }
-  }
-
-  // 清除错误
-  const clearError = () => {
-    error.value = null
-  }
-
   return {
     // 状态
     testRecords,
     currentTest,
     loading,
     error,
-    
-    // 计算属性
     statistics,
     
     // 方法
     createTest,
     getTestRecords,
     getTestDetail,
-    updateTest,
     deleteTest,
-    updateTestStatus,
+    updateTest,
     executeTest,
     analyzeTest,
-    clearError
+    generateMockScripts,
+    initMockData
   }
 })

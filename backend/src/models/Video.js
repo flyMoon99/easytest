@@ -9,6 +9,22 @@ const videoSchema = new mongoose.Schema({
     index: true
   },
   
+  // 关联测试计划
+  testPlanId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'TestPlan',
+    required: [true, '测试计划ID是必填项'],
+    index: true
+  },
+  
+  // 关联测试用例
+  testCaseId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'TestCase',
+    required: [true, '测试用例ID是必填项'],
+    index: true
+  },
+  
   // 基础信息
   name: {
     type: String,
@@ -143,6 +159,9 @@ const videoSchema = new mongoose.Schema({
 videoSchema.index({ memberId: 1, createdAt: -1 });
 videoSchema.index({ parseStatus: 1, createdAt: -1 });
 videoSchema.index({ memberId: 1, parseStatus: 1 });
+videoSchema.index({ testPlanId: 1, testCaseId: 1 });
+videoSchema.index({ memberId: 1, testPlanId: 1 });
+videoSchema.index({ memberId: 1, testCaseId: 1 });
 
 // 实例方法
 videoSchema.methods.updateParseStatus = function(status, additionalData = {}) {

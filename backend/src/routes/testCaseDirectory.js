@@ -95,6 +95,8 @@ router.get('/', authenticateToken, async (req, res) => {
  */
 router.post('/', authenticateToken, async (req, res) => {
   try {
+    console.log('创建目录 - 请求数据:', req.body);
+    
     // 数据验证
     const { error, value } = createDirectorySchema.validate(req.body);
     if (error) {
@@ -102,6 +104,7 @@ router.post('/', authenticateToken, async (req, res) => {
     }
     
     const { name, description, parentId, color, icon, sortOrder } = value;
+    console.log('创建目录 - 验证后的数据:', { name, description, parentId, color, icon, sortOrder });
     
     // 检查父目录是否存在且属于当前用户
     if (parentId) {

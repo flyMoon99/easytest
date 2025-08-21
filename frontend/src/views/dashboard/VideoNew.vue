@@ -5,99 +5,166 @@
       <div>
         <h1 class="text-2xl font-bold text-gray-900">新增视频</h1>
         <p class="mt-1 text-sm text-gray-500">上传视频文件，系统将自动解析视频信息</p>
+        <div v-if="testPlanId || testCaseId" class="mt-2 text-xs text-gray-400">
+          测试计划ID: {{ testPlanId || '未提供' }} | 用例ID: {{ testCaseId || '未提供' }}
+        </div>
       </div>
     </div>
 
-    <!-- 上传表单 -->
-    <BaseCard title="视频信息">
-      <form @submit.prevent="handleSubmit" class="space-y-6">
-        <!-- 视频名称 -->
-        <div>
-          <label for="name" class="block text-sm font-medium text-gray-700 mb-2">
-            视频名称
-          </label>
-          <BaseInput
-            id="name"
-            v-model="form.name"
-            type="text"
-            placeholder="请输入视频名称"
-            :error="errors.name"
-            @blur="validateName"
-            @input="validateName"
-          />
-          <p class="text-sm text-gray-500 mt-1">
-            请为视频起一个描述性的名称，便于后续管理
-          </p>
-        </div>
+    <!-- 主要内容区域 -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- 左侧：测试计划和用例信息 -->
+      <div class="space-y-6">
+        <!-- 测试计划信息 -->
+        <BaseCard title="测试计划信息">
+          <div v-if="testPlanInfo" class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">测试计划名称</label>
+              <p class="text-lg font-semibold text-gray-900">{{ testPlanInfo.name }}</p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">测试类型</label>
+              <p class="text-gray-600">{{ testPlanInfo.testType }}</p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">负责人</label>
+              <p class="text-gray-600">{{ testPlanInfo.assignee }}</p>
+            </div>
+          </div>
+          <div v-else class="text-center py-8">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+            <p class="mt-2 text-sm text-gray-500">未找到测试计划信息</p>
+          </div>
+        </BaseCard>
 
-        <!-- 测试说明 -->
-        <div>
-          <label for="testDescription" class="block text-sm font-medium text-gray-700 mb-2">
-            测试说明
-          </label>
-          <textarea
-            id="testDescription"
-            v-model="form.testDescription"
-            rows="4"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-            placeholder="请描述视频测试的目的、重点关注的测试点、预期结果等..."
-            :class="{ 'border-red-300 focus:border-red-500 focus:ring-red-500': errors.testDescription }"
-            @blur="validateTestDescription"
-            @input="validateTestDescription"
-          ></textarea>
-          <p class="text-sm text-gray-500 mt-1">
-            详细描述测试目标，帮助AI更精准地识别视频中的问题和改进点
-          </p>
-          <p v-if="errors.testDescription" class="text-sm text-red-600 mt-1">{{ errors.testDescription }}</p>
-        </div>
+        <!-- 测试用例信息 -->
+        <BaseCard title="测试用例信息">
+          <div v-if="testCaseInfo" class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">用例标题</label>
+              <p class="text-lg font-semibold text-gray-900">{{ testCaseInfo.title }}</p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">用例级别</label>
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                    :class="{
+                      'bg-red-100 text-red-800': testCaseInfo.level === '高',
+                      'bg-yellow-100 text-yellow-800': testCaseInfo.level === '中',
+                      'bg-green-100 text-green-800': testCaseInfo.level === '低'
+                    }">
+                {{ testCaseInfo.level }}
+              </span>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">测试内容描述</label>
+              <p class="text-gray-600 text-sm leading-relaxed">{{ testCaseInfo.description }}</p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">用例入口URL</label>
+              <a :href="testCaseInfo.entryUrl" target="_blank" class="text-primary-600 hover:text-primary-500 text-sm break-all">
+                {{ testCaseInfo.entryUrl }}
+              </a>
+            </div>
+          </div>
+          <div v-else class="text-center py-8">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <p class="mt-2 text-sm text-gray-500">未找到测试用例信息</p>
+          </div>
+        </BaseCard>
+      </div>
 
-        <!-- 视频文件 -->
-        <div>
-          <label for="video" class="block text-sm font-medium text-gray-700 mb-2">
-            选择视频文件
-          </label>
-          <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-            <div v-if="!selectedFile" class="space-y-4">
-              <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-              </svg>
-              <div>
-                <label for="video-upload" class="cursor-pointer">
-                  <span class="text-primary-600 hover:text-primary-500 font-medium">点击上传</span>
-                  <span class="text-gray-500">或拖拽文件到此处</span>
-                </label>
-                <input
-                  id="video-upload"
-                  ref="fileInput"
-                  type="file"
-                  accept="video/*"
-                  class="hidden"
-                  @change="handleFileSelect"
-                />
-              </div>
-              <p class="text-xs text-gray-500">
-                支持 MP4、AVI、MOV、WMV、FLV、WebM、MKV、3GP、ASF 格式，最大 500MB
+      <!-- 右侧：视频上传表单 -->
+      <div class="space-y-6">
+        <BaseCard title="视频信息">
+          <form @submit.prevent="handleSubmit" class="space-y-6">
+            <!-- 视频名称 -->
+            <div>
+              <label for="name" class="block text-sm font-medium text-gray-700 mb-2">
+                视频名称
+              </label>
+              <BaseInput
+                id="name"
+                v-model="form.name"
+                type="text"
+                placeholder="请输入视频名称"
+                :error="errors.name"
+                @blur="validateName"
+                @input="validateName"
+              />
+              <p class="text-sm text-gray-500 mt-1">
+                请为视频起一个描述性的名称，便于后续管理
               </p>
             </div>
-            
-            <div v-else class="space-y-4">
-              <div class="flex items-center justify-center">
-                <svg class="h-12 w-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <div>
-                <p class="text-sm font-medium text-gray-900">{{ selectedFile.name }}</p>
-                <p class="text-xs text-gray-500">{{ formatFileSize(selectedFile.size) }}</p>
-              </div>
-              <button
-                type="button"
-                @click="removeFile"
-                class="text-sm text-red-600 hover:text-red-500"
-              >
-                移除文件
-              </button>
+
+            <!-- 视频说明 -->
+            <div>
+              <label for="testDescription" class="block text-sm font-medium text-gray-700 mb-2">
+                视频说明
+              </label>
+              <textarea
+                id="testDescription"
+                v-model="form.testDescription"
+                rows="4"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                placeholder="请描述视频备注信息..."
+                :class="{ 'border-red-300 focus:border-red-500 focus:ring-red-500': errors.testDescription }"
+                @blur="validateTestDescription"
+                @input="validateTestDescription"
+              ></textarea>
+              <p v-if="errors.testDescription" class="text-sm text-red-600 mt-1">{{ errors.testDescription }}</p>
             </div>
+
+            <!-- 视频文件 -->
+            <div>
+              <label for="video" class="block text-sm font-medium text-gray-700 mb-2">
+                选择视频文件
+              </label>
+              <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                <div v-if="!selectedFile" class="space-y-4">
+                  <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                  <div>
+                    <label for="video-upload" class="cursor-pointer">
+                      <span class="text-primary-600 hover:text-primary-500 font-medium">点击上传</span>
+                      <span class="text-gray-500">或拖拽文件到此处</span>
+                    </label>
+                    <input
+                      id="video-upload"
+                      ref="fileInput"
+                      type="file"
+                      accept="video/*"
+                      class="hidden"
+                      @change="handleFileSelect"
+                    />
+                  </div>
+                  <p class="text-xs text-gray-500">
+                    支持 MP4、AVI、MOV、WMV、FLV、WebM、MKV、3GP、ASF 格式，最大 500MB
+                  </p>
+                </div>
+                
+                <div v-else class="space-y-4">
+                  <div class="flex items-center justify-center">
+                    <svg class="h-12 w-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p class="text-sm font-medium text-gray-900">{{ selectedFile.name }}</p>
+                    <p class="text-xs text-gray-500">{{ formatFileSize(selectedFile.size) }}</p>
+                  </div>
+                  <button
+                    type="button"
+                    @click="removeFile"
+                    class="text-sm text-red-600 hover:text-red-500"
+                  >
+                    移除文件
+                  </button>
+                </div>
           </div>
           <p v-if="errors.video" class="text-sm text-red-600 mt-1">{{ errors.video }}</p>
         </div>
@@ -123,23 +190,97 @@
         </div>
       </form>
     </BaseCard>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { reactive, computed, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { reactive, computed, ref, onMounted, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useVideoStore } from '@/stores/video'
+import { useTestPlanStore } from '@/stores/testPlan'
+import { useTestStore } from '@/stores/test'
 import BaseInput from '@/components/base/BaseInput.vue'
 import BaseButton from '@/components/base/BaseButton.vue'
 import BaseCard from '@/components/base/BaseCard.vue'
 
-const router = useRouter()
-const videoStore = useVideoStore()
+// Props
+interface Props {
+  testPlanId?: string
+  testCaseId?: string
+}
 
+const props = withDefaults(defineProps<Props>(), {
+  testPlanId: '',
+  testCaseId: ''
+})
+
+// 表单数据
 const form = reactive({
   name: '',
-  testDescription: ''
+  testDescription: '',
+  testPlanId: '',
+  testCaseId: ''
+})
+const testPlanStore = useTestPlanStore()
+const testStore = useTestStore()
+
+const router = useRouter()
+const route = useRoute()
+
+// 从路由查询参数获取测试计划ID和用例ID
+const testPlanId = computed(() => props.testPlanId || (route.query.testPlanId as string) || '')
+const testCaseId = computed(() => props.testCaseId || (route.query.testCaseId as string) || '')
+
+// 调试信息
+console.log('VideoNew.vue - 接收到的参数:', {
+  props: { testPlanId: props.testPlanId, testCaseId: props.testCaseId },
+  routeQuery: route.query,
+  computed: { testPlanId: testPlanId.value, testCaseId: testCaseId.value }
+})
+
+// 测试计划和用例信息
+const testPlanInfo = ref(null)
+const testCaseInfo = ref(null)
+
+const videoStore = useVideoStore()
+
+// 加载测试计划和用例信息
+const loadTestPlanAndCaseInfo = async () => {
+  try {
+    if (testPlanId.value && testPlanId.value.trim()) {
+      console.log('加载测试计划信息，ID:', testPlanId.value)
+      const testPlan = await testPlanStore.getTestPlanDetail(testPlanId.value)
+      testPlanInfo.value = testPlan
+      console.log('测试计划信息加载成功:', testPlan)
+    } else {
+      console.log('测试计划ID为空，跳过加载')
+    }
+    
+    if (testCaseId.value && testCaseId.value.trim()) {
+      console.log('加载测试用例信息，ID:', testCaseId.value)
+      const testCase = await testStore.getTestDetail(testCaseId.value)
+      testCaseInfo.value = testCase
+      console.log('测试用例信息加载成功:', testCase)
+    } else {
+      console.log('测试用例ID为空，跳过加载')
+    }
+  } catch (error) {
+    console.error('加载测试计划或用例信息失败:', error)
+    // 不抛出错误，让页面继续显示
+  }
+}
+
+// 监听测试计划ID和用例ID的变化
+watch([testPlanId, testCaseId], ([newTestPlanId, newTestCaseId]) => {
+  form.testPlanId = newTestPlanId
+  form.testCaseId = newTestCaseId
+}, { immediate: true })
+
+// 生命周期
+onMounted(() => {
+  loadTestPlanAndCaseInfo()
 })
 
 const errors = reactive({
@@ -152,7 +293,13 @@ const selectedFile = ref<File | null>(null)
 const fileInput = ref<HTMLInputElement>()
 
 const isFormValid = computed(() => {
-  return form.name && selectedFile.value && !errors.name && !errors.video && !errors.testDescription
+  return form.name && 
+         selectedFile.value && 
+         testPlanId.value && 
+         testCaseId.value && 
+         !errors.name && 
+         !errors.video && 
+         !errors.testDescription
 })
 
 const validateName = () => {
@@ -262,15 +409,31 @@ const handleSubmit = async () => {
   validateTestDescription()
   validateFile()
   
+  // 验证测试计划ID和用例ID
+  if (!testPlanId.value || !testPlanId.value.trim()) {
+    alert('缺少测试计划ID，请从测试计划页面进入')
+    return
+  }
+  
+  if (!testCaseId.value || !testCaseId.value.trim()) {
+    alert('缺少测试用例ID，请从测试计划页面进入')
+    return
+  }
+  
   if (!isFormValid.value) return
 
   try {
+    console.log('提交视频上传，测试计划ID:', testPlanId.value, '用例ID:', testCaseId.value)
+    
     const formData = new FormData()
     formData.append('name', form.name)
     formData.append('testDescription', form.testDescription)
+    formData.append('testPlanId', testPlanId.value)
+    formData.append('testCaseId', testCaseId.value)
     formData.append('video', selectedFile.value!)
 
     const newVideo = await videoStore.uploadVideo(formData)
+    console.log('视频上传成功:', newVideo)
     
     // 上传成功，跳转到视频列表页
     router.push('/dashboard/video/list')

@@ -1,120 +1,57 @@
 import express from 'express';
-import { authenticateToken } from '../middleware/auth.js';
-import { successResponse, errorResponse, serverErrorResponse } from '../utils/response.js';
-import TestPlan from '../models/TestPlan.js';
 import Joi from 'joi';
+import { successResponse, errorResponse, serverErrorResponse } from '../utils/response.js';
+import { authenticateToken } from '../middleware/auth.js';
+import TestPlan from '../models/TestPlan.js';
 
 const router = express.Router();
 
-// 数据验证schema
+// 验证模式
 const createTestPlanSchema = Joi.object({
-  name: Joi.string().trim().min(1).max(100).required().messages({
-    'string.empty': '计划名称不能为空',
-    'string.min': '计划名称至少1个字符',
+  name: Joi.string().max(100).required().messages({
     'string.max': '计划名称最多100个字符',
     'any.required': '计划名称是必填项'
   }),
-  description: Joi.string().trim().max(2000).allow('').optional().messages({
+  description: Joi.string().max(2000).optional().messages({
     'string.max': '计划描述最多2000个字符'
   }),
   status: Joi.string().valid('draft', 'active', 'completed', 'cancelled').default('draft').messages({
     'any.only': '状态必须是 draft、active、completed 或 cancelled'
   }),
-  testType: Joi.string().trim().min(1).max(50).required().messages({
-    'string.empty': '测试类型不能为空',
-    'string.min': '测试类型至少1个字符',
+  testType: Joi.string().max(50).required().messages({
     'string.max': '测试类型最多50个字符',
     'any.required': '测试类型是必填项'
   }),
-  assignee: Joi.string().trim().min(1).max(50).required().messages({
-    'string.empty': '测试负责人不能为空',
-    'string.min': '测试负责人至少1个字符',
+  assignee: Joi.string().max(50).required().messages({
     'string.max': '测试负责人最多50个字符',
     'any.required': '测试负责人是必填项'
   }),
   startTime: Joi.date().required().messages({
-    'any.required': '开始时间是必填项',
-    'date.base': '开始时间格式不正确'
+    'any.required': '开始时间是必填项'
   }),
-  endTime: Joi.date().greater(Joi.ref('startTime')).required().messages({
-    'any.required': '结束时间是必填项',
-    'date.base': '结束时间格式不正确',
-    'date.greater': '结束时间必须晚于开始时间'
+  endTime: Joi.date().required().messages({
+    'any.required': '结束时间是必填项'
   })
 });
 
 const updateTestPlanSchema = Joi.object({
-  name: Joi.string().trim().min(1).max(100).optional().messages({
-    'string.empty': '计划名称不能为空',
-    'string.min': '计划名称至少1个字符',
+  name: Joi.string().max(100).messages({
     'string.max': '计划名称最多100个字符'
   }),
-  description: Joi.string().trim().max(2000).allow('').optional().messages({
+  description: Joi.string().max(2000).messages({
     'string.max': '计划描述最多2000个字符'
   }),
-  status: Joi.string().valid('draft', 'active', 'completed', 'cancelled').optional().messages({
+  status: Joi.string().valid('draft', 'active', 'completed', 'cancelled').messages({
     'any.only': '状态必须是 draft、active、completed 或 cancelled'
   }),
-  testType: Joi.string().trim().min(1).max(50).optional().messages({
-    'string.empty': '测试类型不能为空',
-    'string.min': '测试类型至少1个字符',
+  testType: Joi.string().max(50).messages({
     'string.max': '测试类型最多50个字符'
   }),
-  assignee: Joi.string().trim().min(1).max(50).optional().messages({
-    'string.empty': '测试负责人不能为空',
-    'string.min': '测试负责人至少1个字符',
+  assignee: Joi.string().max(50).messages({
     'string.max': '测试负责人最多50个字符'
   }),
-  startTime: Joi.date().optional().messages({
-    'date.base': '开始时间格式不正确'
-  }),
-  endTime: Joi.date().optional().messages({
-    'date.base': '结束时间格式不正确'
-  })
-}).custom((value, helpers) => {
-  // 如果同时提供了开始时间和结束时间，验证结束时间晚于开始时间
-  if (value.startTime && value.endTime && value.endTime <= value.startTime) {
-    return helpers.error('date.greater');
-  }
-  return value;
-}, 'validate date range');
-
-/**
- * 获取测试计划列表
- * GET /api/test-plans
- */
-router.get('/', authenticateToken, async (req, res) => {
-  try {
-    const {
-      page = 1,
-      limit = 10,
-      status,
-      search,
-      sortBy = 'createdAt',
-      sortOrder = 'desc'
-    } = req.query;
-
-    const options = {
-      page: parseInt(page),
-      limit: parseInt(limit),
-      status,
-      search,
-      sortBy,
-      sortOrder
-    };
-
-    const result = await TestPlan.getTestPlanList(req.user._id, options);
-    const statistics = await TestPlan.getTestPlanStatistics(req.user._id);
-
-    return successResponse(res, {
-      testPlans: result.testPlans,
-      pagination: result.pagination,
-      statistics
-    }, '获取测试计划列表成功');
-  } catch (error) {
-    console.error('获取测试计划列表失败:', error);
-    return serverErrorResponse(res, '获取测试计划列表失败');
-  }
+  startTime: Joi.date(),
+  endTime: Joi.date()
 });
 
 /**
@@ -129,34 +66,43 @@ router.post('/', authenticateToken, async (req, res) => {
       return errorResponse(res, error.details[0].message, 400);
     }
 
-    const {
-      name,
-      description,
-      status,
-      testType,
-      assignee,
-      startTime,
-      endTime
-    } = value;
-
     // 创建测试计划
     const testPlan = new TestPlan({
       memberId: req.user._id,
-      name,
-      description,
-      status,
-      testType,
-      assignee,
-      startTime: new Date(startTime),
-      endTime: new Date(endTime)
+      ...value,
+      startTime: new Date(value.startTime),
+      endTime: new Date(value.endTime)
     });
 
     await testPlan.save();
 
-    return successResponse(res, testPlan, '测试计划创建成功');
+    return successResponse(res, testPlan, '测试计划创建成功', 201);
   } catch (error) {
     console.error('创建测试计划失败:', error);
     return serverErrorResponse(res, '创建测试计划失败');
+  }
+});
+
+/**
+ * 获取测试计划列表
+ * GET /api/test-plans
+ */
+router.get('/', authenticateToken, async (req, res) => {
+  try {
+    const { page = 1, limit = 10, status, search } = req.query;
+    
+    const options = {
+      page: parseInt(page),
+      limit: parseInt(limit),
+      status,
+      search
+    };
+
+    const result = await TestPlan.getTestPlanList(req.user._id, options);
+    return successResponse(res, result);
+  } catch (error) {
+    console.error('获取测试计划列表失败:', error);
+    return serverErrorResponse(res, '获取测试计划列表失败');
   }
 });
 
@@ -249,8 +195,8 @@ router.delete('/:id', authenticateToken, async (req, res) => {
     }
 
     // 检查是否有关联的测试用例
-    const TestCase = (await import('../models/TestCase.js')).default;
-    const testCaseCount = await TestCase.countDocuments({
+    const TestPlanTestCase = (await import('../models/TestPlanTestCase.js')).default;
+    const testCaseCount = await TestPlanTestCase.countDocuments({
       testPlanId: id,
       memberId: req.user._id
     });
@@ -302,70 +248,13 @@ router.get('/:id/related-cases', authenticateToken, async (req, res) => {
     }
 
     // 获取关联的测试用例
-    const TestCase = (await import('../models/TestCase.js')).default;
-    const TestCaseDirectory = (await import('../models/TestCaseDirectory.js')).default;
-
-    const skip = (parseInt(page) - 1) * parseInt(limit);
-    
-    const testCases = await TestCase.find({
-      testPlanId: id,
-      memberId: req.user._id
-    })
-    .populate('directoryId', 'name path')
-    .sort({ createdAt: -1 })
-    .skip(skip)
-    .limit(parseInt(limit))
-    .lean();
-
-    // 处理数据格式
-    const formattedCases = testCases.map(testCase => {
-      const directoryPath = testCase.directoryId ? 
-        testCase.directoryId.path.split('/').filter(Boolean) : [];
-      
-      // 根据执行结果确定最终结果
-      let result = 'notExecuted';
-      if (testCase.result && testCase.result.success !== undefined) {
-        result = testCase.result.success ? 'pass' : 'fail';
-      }
-      
-      // 根据状态确定用例等级（这里可以根据实际业务逻辑调整）
-      let level = '中';
-      if (testCase.status === 'completed' && testCase.result && testCase.result.success) {
-        level = '高';
-      } else if (testCase.status === 'failed') {
-        level = '低';
-      }
-      
-      return {
-        id: testCase._id.toString(),
-        title: testCase.title,
-        status: testCase.status,
-        assignee: testCase.assignee || '未分配',
-        updatedAt: testCase.updatedAt,
-        directoryPath: directoryPath,
-        level: level,
-        result: result,
-        executionCount: 1, // 默认值，实际应该从执行历史中统计
-        relatedBugs: '', // 默认值，实际应该从Bug关联中获取
-        lastExecutor: testCase.assignee || '未分配',
-        lastExecutionTime: testCase.completedAt || testCase.updatedAt
-      };
+    const TestPlanTestCase = (await import('../models/TestPlanTestCase.js')).default;
+    const result = await TestPlanTestCase.getTestPlanCasesWithDetails(id, {
+      page: parseInt(page),
+      limit: parseInt(limit)
     });
 
-    const total = await TestCase.countDocuments({
-      testPlanId: id,
-      memberId: req.user._id
-    });
-
-    return successResponse(res, {
-      testCases: formattedCases,
-      pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
-        total,
-        totalPages: Math.ceil(total / parseInt(limit))
-      }
-    }, '获取关联测试用例成功');
+    return successResponse(res, result, '获取关联测试用例成功');
   } catch (error) {
     console.error('获取关联测试用例失败:', error);
     return serverErrorResponse(res, '获取关联测试用例失败');
@@ -396,8 +285,9 @@ router.post('/:id/associate-cases', authenticateToken, async (req, res) => {
       return errorResponse(res, '请选择要关联的测试用例', 400);
     }
 
-    // 获取TestCase模型
+    // 获取TestCase和TestPlanTestCase模型
     const TestCase = (await import('../models/TestCase.js')).default;
+    const TestPlanTestCase = (await import('../models/TestPlanTestCase.js')).default;
 
     // 验证用例是否存在且属于当前用户
     const testCases = await TestCase.find({
@@ -409,11 +299,8 @@ router.post('/:id/associate-cases', authenticateToken, async (req, res) => {
       return errorResponse(res, '部分测试用例不存在或无权限访问', 400);
     }
 
-    // 更新用例的testPlanId
-    await TestCase.updateMany(
-      { _id: { $in: caseIds } },
-      { testPlanId: id }
-    );
+    // 批量创建关联关系
+    await TestPlanTestCase.batchCreateAssociations(id, caseIds, req.user._id);
 
     // 更新测试计划统计信息
     await testPlan.updateStatistics();
@@ -424,6 +311,70 @@ router.post('/:id/associate-cases', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('关联测试用例失败:', error);
     return serverErrorResponse(res, '关联测试用例失败');
+  }
+});
+
+/**
+ * 更新测试计划用例的执行结果
+ * PUT /api/test-plans/:id/cases/:caseId/result
+ */
+router.put('/:id/cases/:caseId/result', authenticateToken, async (req, res) => {
+  try {
+    const { id: testPlanId, caseId } = req.params;
+    const { result, executionDescription } = req.body;
+
+    // 验证测试计划是否存在
+    const testPlan = await TestPlan.findOne({
+      _id: testPlanId,
+      memberId: req.user._id
+    });
+
+    if (!testPlan) {
+      return errorResponse(res, '测试计划不存在', 404);
+    }
+
+    // 验证结果值
+    const validResults = ['pass', 'fail', 'blocked', 'skipped', 'notExecuted'];
+    if (!validResults.includes(result)) {
+      return errorResponse(res, '无效的执行结果', 400);
+    }
+
+    // 获取TestPlanTestCase模型
+    const TestPlanTestCase = (await import('../models/TestPlanTestCase.js')).default;
+
+    // 先查找现有的记录
+    const existingRecord = await TestPlanTestCase.findOne({
+      testPlanId,
+      testCaseId: caseId,
+      memberId: req.user._id
+    });
+
+    if (!existingRecord) {
+      return errorResponse(res, '测试用例不存在或无权访问', 404);
+    }
+
+    // 更新用例结果
+    existingRecord.result = result;
+    existingRecord.executionDescription = executionDescription || '';
+    existingRecord.executionCount = (existingRecord.executionCount || 0) + 1;
+    existingRecord.lastExecutionTime = new Date();
+    existingRecord.lastExecutor = req.user.username || req.user.email || '未知用户';
+    
+    await existingRecord.save();
+    
+    const testPlanTestCase = existingRecord;
+
+    if (!testPlanTestCase) {
+      return errorResponse(res, '测试用例不存在或无权访问', 404);
+    }
+
+    // 更新测试计划统计信息
+    await testPlan.updateStatistics();
+
+    return successResponse(res, testPlanTestCase, '用例执行结果更新成功');
+  } catch (error) {
+    console.error('更新用例执行结果失败:', error);
+    return serverErrorResponse(res, '更新用例执行结果失败');
   }
 });
 

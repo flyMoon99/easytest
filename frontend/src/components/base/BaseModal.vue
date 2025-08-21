@@ -124,15 +124,30 @@ const handleBackdropClick = () => {
 }
 
 // 监听ESC键
+let escapeHandler: ((event: KeyboardEvent) => void) | null = null
+
 watch(() => props.modelValue, (newShow) => {
   if (newShow) {
-    const handleEscape = (event: KeyboardEvent) => {
+    escapeHandler = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         handleClose()
-        document.removeEventListener('keydown', handleEscape)
       }
     }
-    document.addEventListener('keydown', handleEscape)
+    document.addEventListener('keydown', escapeHandler)
+  } else {
+    if (escapeHandler) {
+      document.removeEventListener('keydown', escapeHandler)
+      escapeHandler = null
+    }
+  }
+})
+
+// 组件卸载时清理
+import { onUnmounted } from 'vue'
+onUnmounted(() => {
+  if (escapeHandler) {
+    document.removeEventListener('keydown', escapeHandler)
+    escapeHandler = null
   }
 })
 </script> 

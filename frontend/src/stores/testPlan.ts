@@ -189,9 +189,12 @@ export const useTestPlanStore = defineStore('testPlan', () => {
       loading.value = true
       error.value = null
       
+      console.log('Store: 开始获取关联用例，参数:', { testPlanId, params })
       const response = await testPlanAPI.getRelatedCases(testPlanId, params)
+      console.log('Store: API原始响应:', response)
       return response.data
     } catch (err) {
+      console.error('Store: 获取关联用例失败:', err)
       error.value = err instanceof Error ? err.message : '获取关联测试用例失败'
       throw err
     } finally {
@@ -211,6 +214,38 @@ export const useTestPlanStore = defineStore('testPlan', () => {
       return response.data
     } catch (err) {
       error.value = err instanceof Error ? err.message : '关联测试用例失败'
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  /**
+   * 更新测试计划用例的执行结果
+   */
+  const updateTestCaseResult = async (testPlanId: string, caseId: string, data: { result: string; executionDescription?: string }) => {
+    try {
+      loading.value = true
+      error.value = null
+      
+      // 直接调用API，因为testPlanAPI中没有updateTestCaseResult方法
+      const response = await fetch(`/api/test-plans/${testPlanId}/cases/${caseId}/result`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(data)
+      })
+      
+      if (!response.ok) {
+        throw new Error('更新用例执行结果失败')
+      }
+      
+      const result = await response.json()
+      return result.data
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : '更新用例执行结果失败'
       throw err
     } finally {
       loading.value = false
@@ -264,6 +299,7 @@ export const useTestPlanStore = defineStore('testPlan', () => {
     updateStatistics,
     getRelatedCases,
     associateCases,
+    updateTestCaseResult,
     clearState
   }
 })

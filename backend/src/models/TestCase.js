@@ -17,14 +17,6 @@ const testCaseSchema = new mongoose.Schema({
     index: true
   },
   
-  // 关联测试计划
-  testPlanId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'TestPlan',
-    default: null,
-    index: true
-  },
-  
   // 基础信息
   title: {
     type: String,
@@ -57,50 +49,11 @@ const testCaseSchema = new mongoose.Schema({
     required: false
   },
   
-  // 状态管理
-  status: {
-    type: String,
-    enum: ['pending', 'screened', 'analyzed', 'completed', 'failed'],
-    default: 'pending',
-    required: true,
-    index: true
-  },
-  
   // 截图地址
   screenshotUrl: {
     type: String,
     default: '',
     trim: true
-  },
-  
-  // 执行结果
-  result: {
-    success: {
-      type: Boolean,
-      default: false
-    },
-    message: {
-      type: String,
-      default: ''
-    },
-    errorDetails: {
-      type: String,
-      default: ''
-    }
-  },
-  
-  // 执行时间信息
-  duration: {
-    type: Number, // 执行时长（毫秒）
-    default: 0
-  },
-  
-  startedAt: {
-    type: Date
-  },
-  
-  completedAt: {
-    type: Date
   },
   
   // 生成的脚本信息
@@ -171,32 +124,8 @@ const testCaseSchema = new mongoose.Schema({
 
 // 索引
 testCaseSchema.index({ memberId: 1, createdAt: -1 });
-testCaseSchema.index({ status: 1, createdAt: -1 });
-testCaseSchema.index({ memberId: 1, status: 1 });
 testCaseSchema.index({ directoryId: 1, createdAt: -1 });
 testCaseSchema.index({ memberId: 1, directoryId: 1 });
-testCaseSchema.index({ testPlanId: 1, memberId: 1 });
-testCaseSchema.index({ testPlanId: 1, status: 1 });
-
-// 实例方法
-testCaseSchema.methods.updateStatus = function(status, additionalData = {}) {
-  this.status = status;
-  this.updatedAt = new Date();
-  
-  if (status === 'screened') {
-    this.startedAt = new Date();
-  } else if (status === 'completed' || status === 'failed') {
-    this.completedAt = new Date();
-    if (this.startedAt) {
-      this.duration = this.completedAt - this.startedAt;
-    }
-  }
-  
-  // 合并额外数据
-  Object.assign(this, additionalData);
-  
-  return this.save();
-};
 
 // 静态方法
 testCaseSchema.statics.getStatistics = async function(memberId) {
@@ -204,36 +133,16 @@ testCaseSchema.statics.getStatistics = async function(memberId) {
     { $match: { memberId: new mongoose.Types.ObjectId(memberId) } },
     {
       $group: {
-        _id: '$status',
-        count: { $sum: 1 }
+        _id: null,
+        total: { $sum: 1 }
       }
     }
   ]);
-  
-  const result = {
-    total: 0,
-    pending: 0,
-    screened: 0,
-    analyzed: 0,
-    completed: 0,
-    failed: 0
-  };
-  
-  stats.forEach(stat => {
-    result[stat._id] = stat.count;
-    result.total += stat.count;
-  });
-  
-  result.successRate = result.total > 0 ? Math.round((result.completed / result.total) * 100) : 0;
-  
-  return result;
-};
 
-// 中间件
-testCaseSchema.pre('save', function(next) {
-  this.updatedAt = new Date();
-  next();
-});
+  return {
+    total: stats.length > 0 ? stats[0].total : 0
+  };
+};
 
 const TestCase = mongoose.model('TestCase', testCaseSchema);
 

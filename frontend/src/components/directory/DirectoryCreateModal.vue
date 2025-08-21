@@ -298,12 +298,16 @@ const handleSubmit = async () => {
   loading.value = true
   
   try {
+    console.log('创建目录 - 表单数据:', form.value)
+    console.log('创建目录 - 父目录:', props.parentDirectory)
+    
     const directory = await directoryStore.createDirectory({
       ...form.value,
       name: form.value.name.trim(),
       description: form.value.description?.trim() || ''
     })
     
+    console.log('创建目录 - 成功:', directory)
     emit('created', directory)
     handleClose()
   } catch (error: any) {
@@ -334,7 +338,7 @@ watch(isVisible, (visible) => {
     form.value = {
       name: '',
       description: '',
-      parentId: props.parentDirectory?._id || null,
+      parentId: props.parentDirectory?.id || null,
       color: '#1f2937',
       icon: 'folder',
       sortOrder: 0
@@ -351,6 +355,6 @@ watch(isVisible, (visible) => {
 
 // 监听父目录变化（在模态框显示状态监听之后，确保正确的执行顺序）
 watch(() => props.parentDirectory, (newParent) => {
-  form.value.parentId = newParent?._id || null
+  form.value.parentId = newParent?.id || null
 }, { immediate: true })
 </script>

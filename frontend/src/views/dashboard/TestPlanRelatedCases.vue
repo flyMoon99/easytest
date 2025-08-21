@@ -254,21 +254,32 @@
     :excluded-case-ids="testCases.map(testCase => testCase.id)"
     @confirm="handleConfirmSelection"
   />
+
+  <!-- 执行用例弹窗 -->
+  <ExecuteTestCaseModal
+    v-model="showExecuteModal"
+    :test-case="currentTestCase"
+    :test-plan-id="testPlanId"
+    @success="handleExecuteSuccess"
+  />
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useTestPlanStore } from '@/stores/testPlan'
+import { useAuthStore } from '@/stores/auth'
 import BaseButton from '@/components/base/BaseButton.vue'
 import BaseCard from '@/components/base/BaseCard.vue'
 import BaseInput from '@/components/base/BaseInput.vue'
 import HierarchicalTestCaseTable from '@/components/testPlan/HierarchicalTestCaseTable.vue'
 import SelectTestCasesModal from '@/components/testPlan/SelectTestCasesModal.vue'
+import ExecuteTestCaseModal from '@/components/testPlan/ExecuteTestCaseModal.vue'
 
 const router = useRouter()
 const route = useRoute()
 const testPlanStore = useTestPlanStore()
+const authStore = useAuthStore()
 
 // 状态
 const loading = ref(false)
@@ -280,6 +291,10 @@ const tableRef = ref()
 
 // 用例选择弹窗
 const showSelectModal = ref(false)
+
+// 执行用例弹窗
+const showExecuteModal = ref(false)
+const currentTestCase = ref<any>(null)
 
 // 计算属性
 const currentTestPlan = computed(() => testPlanStore.currentTestPlan)
@@ -400,15 +415,62 @@ const handleExecute = () => {
 }
 
 const handleUploadVideo = (testCase: any) => {
-  console.log('上传视频:', testCase)
-  // 这里可以实现上传视频的逻辑
-  // 例如：打开上传视频的模态框或跳转到上传页面
+  console.log('上传视频 - 完整用例数据:', testCase)
+  console.log('上传视频 - 用例ID字段:', {
+    id: testCase.id,
+    testCaseId: testCase.testCaseId,
+    title: testCase.title
+  })
+  
+  // 跳转到新增视频页面，并传递测试计划ID和用例ID
+  // testCase.testCaseId 是真正的TestCase的ID
+  const actualTestCaseId = testCase.testCaseId
+  console.log('传递的测试用例ID:', actualTestCaseId)
+  
+  if (!actualTestCaseId) {
+    console.error('错误：没有找到有效的测试用例ID')
+    alert('错误：没有找到有效的测试用例ID')
+    return
+  }
+  
+  router.push({
+    name: 'video-new',
+    query: {
+      testPlanId: testPlanId.value,
+      testCaseId: actualTestCaseId
+    }
+  })
 }
 
 const handleExecuteSingle = (testCase: any) => {
   console.log('执行单个用例:', testCase)
-  // 这里可以实现执行单个用例的逻辑
-  // 例如：跳转到执行页面或打开执行模态框
+  // 确保testCase存在且有效
+  if (!testCase || !testCase.testCaseId) {
+    console.error('无效的测试用例:', testCase)
+    return
+  }
+  currentTestCase.value = testCase
+  showExecuteModal.value = true
+}
+
+const handleExecuteSuccess = async (data: any) => {
+  try {
+    loading.value = true
+    console.log('执行成功，数据:', data)
+    
+    // 调用API更新用例结果
+    await testPlanStore.updateTestCaseResult(testPlanId.value, data.testCaseId, data.data)
+    
+    // 重新加载关联用例
+    await loadRelatedCases()
+    
+    // 显示成功消息
+    console.log('用例执行结果更新成功')
+  } catch (error) {
+    console.error('更新用例执行结果失败:', error)
+  } finally {
+    loading.value = false
+  }
 }
 
 const handleTestReport = () => {
@@ -448,11 +510,34 @@ const loadRelatedCases = async () => {
   
   try {
     loading.value = true
+    console.log('开始加载关联用例，测试计划ID:', testPlanId.value)
+    console.log('认证状态:', authStore.isAuthenticated)
+    console.log('用户信息:', authStore.user)
+    
     const response = await testPlanStore.getRelatedCases(testPlanId.value)
+    console.log('API响应:', response)
     testCases.value = response.testCases || []
+    console.log('设置用例数据:', testCases.value)
+    
+    // 调试：检查第一个用例的数据结构
+    if (testCases.value.length > 0) {
+      const firstCase = testCases.value[0]
+      console.log('第一个用例的完整数据结构:', firstCase)
+      console.log('第一个用例的ID字段:', {
+        id: firstCase.id,
+        testCaseId: firstCase.testCaseId,
+        title: firstCase.title
+      })
+    }
   } catch (error) {
     console.error('加载关联用例失败:', error)
     testCases.value = []
+    
+    // 检查是否是认证错误
+    if (error instanceof Error && error.message && error.message.includes('认证')) {
+      console.error('认证失败，请先登录')
+      // 可以在这里添加提示或重定向到登录页面
+    }
   } finally {
     loading.value = false
   }
@@ -460,13 +545,30 @@ const loadRelatedCases = async () => {
 
 // 生命周期
 onMounted(async () => {
+  console.log('组件挂载，认证状态:', authStore.isAuthenticated)
+  console.log('用户信息:', authStore.user)
+  console.log('令牌:', authStore.token ? '存在' : '不存在')
+  
   if (testPlanId.value) {
     try {
+      console.log('组件挂载，开始加载数据，测试计划ID:', testPlanId.value)
       await testPlanStore.getTestPlanDetail(testPlanId.value)
+      console.log('测试计划详情加载成功')
       await loadRelatedCases()
+      console.log('关联用例加载完成')
     } catch (error) {
       console.error('加载测试计划详情失败:', error)
     }
+  } else {
+    console.error('测试计划ID不存在')
   }
+})
+
+// 组件卸载时清理
+onUnmounted(() => {
+  // 清理弹窗状态
+  showExecuteModal.value = false
+  currentTestCase.value = null
+  showSelectModal.value = false
 })
 </script>

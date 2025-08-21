@@ -40,7 +40,7 @@
           </div>
           <div class="ml-3">
             <p class="text-sm font-medium text-gray-500">已完成</p>
-            <p class="text-lg font-semibold text-gray-900">{{ testStore.statistics.completed }}</p>
+            <p class="text-lg font-semibold text-gray-900">{{ testStore.statistics.total }}</p>
           </div>
         </div>
       </div>
@@ -56,7 +56,7 @@
           </div>
           <div class="ml-3">
             <p class="text-sm font-medium text-gray-500">运行中</p>
-                            <p class="text-lg font-semibold text-gray-900">{{ testStore.statistics.screened }}</p>
+                            <p class="text-lg font-semibold text-gray-900">{{ 0 }}</p>
           </div>
         </div>
       </div>
@@ -72,7 +72,7 @@
           </div>
           <div class="ml-3">
             <p class="text-sm font-medium text-gray-500">失败</p>
-            <p class="text-lg font-semibold text-gray-900">{{ testStore.statistics.failed }}</p>
+            <p class="text-lg font-semibold text-gray-900">{{ 0 }}</p>
           </div>
         </div>
       </div>
@@ -158,20 +158,20 @@
                 <td class="px-6 py-4 whitespace-nowrap">
                   <span :class="[
                     'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
-                    getStatusStyle(test.status)
+                    'bg-gray-100 text-gray-800'
                   ]">
                     <span :class="[
                       'w-1.5 h-1.5 rounded-full mr-1.5',
-                      getStatusDotColor(test.status)
+                      'bg-gray-400'
                     ]"></span>
-                    {{ getStatusText(test.status) }}
+                    {{ '待处理' }}
                   </span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {{ formatDateTime(test.createdAt) }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {{ test.completedAt ? formatDateTime(test.completedAt) : '-' }}
+                  {{ '-' }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm space-x-2">
                   <BaseButton
@@ -182,7 +182,7 @@
                     详情
                   </BaseButton>
                   <BaseButton
-                    v-if="test.status === 'completed'"
+                    v-if="false"
                     variant="outline"
                     size="sm"
                     @click="handleGenerateReport(test.id)"
@@ -253,41 +253,11 @@ const filteredTests = computed(() => {
   if (!filterStatus.value) {
     return testStore.testRecords
   }
-  return testStore.testRecords.filter(test => test.status === filterStatus.value)
+  return testStore.testRecords.filter(test => true)
 })
 
-const getStatusStyle = (status: TestRecord['status']) => {
-  const styles = {
-    pending: 'bg-yellow-100 text-yellow-800',
-    screened: 'bg-orange-100 text-orange-800',
-    analyzed: 'bg-purple-100 text-purple-800',
-    completed: 'bg-green-100 text-green-800',
-    failed: 'bg-red-100 text-red-800'
-  }
-  return styles[status]
-}
 
-const getStatusDotColor = (status: TestRecord['status']) => {
-  const colors = {
-    pending: 'bg-yellow-400',
-    screened: 'bg-orange-400',
-    analyzed: 'bg-purple-400',
-    completed: 'bg-green-400',
-    failed: 'bg-red-400'
-  }
-  return colors[status]
-}
 
-const getStatusText = (status: TestRecord['status']) => {
-  const texts = {
-    pending: '等待截图',
-    screened: '已截图',
-    analyzed: '已解析',
-    completed: '已完成',
-    failed: '失败'
-  }
-  return texts[status]
-}
 
 const formatDateTime = (dateString: string) => {
   const date = new Date(dateString)

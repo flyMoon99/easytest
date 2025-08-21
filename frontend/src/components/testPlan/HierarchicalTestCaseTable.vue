@@ -80,7 +80,7 @@
           <div class="flex items-center space-x-2">
             <!-- 缩进 -->
             <div 
-              v-for="i in item.depth" 
+              v-for="i in (item.depth || 0)" 
               :key="i"
               class="w-4 h-4 border-l border-gray-200"
             ></div>
@@ -259,6 +259,7 @@ interface TreeItem {
   relatedBugs?: string
   lastExecutor?: string
   lastExecutionTime?: string
+  testCaseId?: string  // 新增：真正的TestCase ID
 }
 
 interface Props {
@@ -282,6 +283,7 @@ const buildTreeData = (cases: TestCase[]): TreeItem[] => {
   const directoryMap = new Map<string, TreeItem>()
   
   cases.forEach((testCase) => {
+    // directoryPath现在总是数组格式
     const path = testCase.directoryPath || []
     
     // 构建目录层级
@@ -319,6 +321,7 @@ const buildTreeData = (cases: TestCase[]): TreeItem[] => {
           // 添加用例到最后的目录
       // 在 buildTreeData 函数中修改用例项创建
       const testCaseItem: TreeItem = {
+        ...testCase, // 保留原始数据的所有字段，包括testCaseId
         id: testCase.id,
         type: 'testcase',
         title: testCase.title,
@@ -351,10 +354,10 @@ const flattenTreeData = (tree: TreeItem[], depth = 0): TreeItem[] => {
   const result: TreeItem[] = []
   
   tree.forEach(item => {
-    // 添加当前项
+    // 添加当前项，保持原有的 depth 值，如果没有则使用传入的 depth
     result.push({
       ...item,
-      depth: depth  // 使用传入的深度值
+      depth: item.depth !== undefined ? item.depth : depth
     })
     
     // 如果是目录且展开，添加子项

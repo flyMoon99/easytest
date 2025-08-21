@@ -78,6 +78,14 @@ const createVideoSchema = Joi.object({
     'string.min': '测试说明至少10个字符',
     'string.max': '测试说明最多500个字符',
     'any.required': '测试说明是必填项'
+  }),
+  testPlanId: Joi.string().pattern(/^[0-9a-fA-F]{24}$/).required().messages({
+    'string.pattern.base': '测试计划ID格式不正确',
+    'any.required': '测试计划ID是必填项'
+  }),
+  testCaseId: Joi.string().pattern(/^[0-9a-fA-F]{24}$/).required().messages({
+    'string.pattern.base': '测试用例ID格式不正确',
+    'any.required': '测试用例ID是必填项'
   })
 });
 
@@ -104,7 +112,7 @@ router.post('/upload', authenticateToken, upload.single('video'), async (req, re
       return errorResponse(res, error.details[0].message, 400);
     }
 
-    const { name, testDescription } = value;
+    const { name, testDescription, testPlanId, testCaseId } = value;
 
     // 处理MIME类型 - Chrome不支持video/quicktime，统一使用video/mp4
     let mimeType = req.file.mimetype;
@@ -115,6 +123,8 @@ router.post('/upload', authenticateToken, upload.single('video'), async (req, re
     // 创建视频记录
     const video = new Video({
       memberId: req.user._id,
+      testPlanId: testPlanId,
+      testCaseId: testCaseId,
       name: name || req.file.originalname,
       testDescription: testDescription,
       originalName: req.file.originalname,

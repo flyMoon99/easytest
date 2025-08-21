@@ -119,13 +119,12 @@ testPlanSchema.index({ startTime: 1, endTime: 1 });
 
 // 实例方法
 testPlanSchema.methods.updateStatistics = async function() {
-  const TestCase = mongoose.model('TestCase');
+  const TestPlanTestCase = (await import('./TestPlanTestCase.js')).default;
   
   // 统计该计划下的测试用例
-  const stats = await TestCase.aggregate([
+  const stats = await TestPlanTestCase.aggregate([
     {
       $match: {
-        memberId: this.memberId,
         testPlanId: this._id
       }
     },
@@ -135,18 +134,18 @@ testPlanSchema.methods.updateStatistics = async function() {
         totalCases: { $sum: 1 },
         completedCases: {
           $sum: {
-            $cond: [{ $eq: ['$status', 'completed'] }, 1, 0]
+            $cond: [{ $eq: ["$result", "pass"] }, 1, 0]
           }
         },
         failedCases: {
           $sum: {
-            $cond: [{ $eq: ['$status', 'failed'] }, 1, 0]
+            $cond: [{ $eq: ["$result", "fail"] }, 1, 0]
           }
         }
       }
     }
   ]);
-
+  
   if (stats.length > 0) {
     const stat = stats[0];
     this.statistics = {
@@ -167,7 +166,7 @@ testPlanSchema.methods.updateStatistics = async function() {
     this.testCaseCount = 0;
     this.completedTestCaseCount = 0;
   }
-
+  
   await this.save();
 };
 

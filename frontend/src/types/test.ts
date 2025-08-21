@@ -5,20 +5,11 @@ export interface TestRecord {
   description: string
   directoryId: string
   level?: string // 用例等级：高、中、低
-  status: TestStatus
   createdAt: string
   updatedAt?: string
-  completedAt?: string
   playwrightScripts: PlaywrightScript[]
   videoUrl?: string
-  duration?: number
-  userId: string
   screenshotUrl?: string
-  result?: {
-    success: boolean
-    message: string
-    errorDetails: string
-  }
   aiAnalysis?: {
     analysis: string
     aiModel: string
@@ -60,15 +51,7 @@ export interface TestForm {
 
 export interface TestStatistics {
   total: number
-  pending: number
-  screened: number
-  analyzed: number
-  completed: number
-  failed: number
-  successRate: number
 }
-
-export type TestStatus = 'pending' | 'screened' | 'analyzed' | 'completed' | 'failed'
 
 export interface TestState {
   testRecords: TestRecord[]
@@ -76,4 +59,46 @@ export interface TestState {
   statistics: TestStatistics
   loading: boolean
   error: string | null
+}
+
+// 新增：测试计划用例关联类型
+export interface TestPlanTestCase {
+  id: string
+  testPlanId: string
+  testCaseId: string
+  memberId: string
+  status: 'pending' | 'screened' | 'analyzed' | 'completed' | 'failed'
+  result: 'pass' | 'fail' | 'blocked' | 'skipped' | 'notExecuted'
+  executionCount: number
+  relatedBugs: number
+  lastExecutionTime?: string
+  lastExecutor: string
+  createdAt: string
+  updatedAt: string
+}
+
+// 新增：测试计划用例详情类型（包含用例信息）
+export interface TestPlanTestCaseDetail {
+  id: string
+  testCaseId: string
+  title: string
+  entryUrl: string
+  description: string
+  level: string
+  directoryPath: string[] // 后端现在返回数组格式
+  status: string
+  result: string
+  executionCount: number
+  relatedBugs: number
+  lastExecutionTime?: string
+  lastExecutor: string
+  executionDescription?: string
+  createdAt: string
+  updatedAt: string
+}
+
+// 新增：更新用例执行结果的请求类型
+export interface UpdateTestCaseResultRequest {
+  result: 'pass' | 'fail' | 'blocked' | 'skipped' | 'notExecuted'
+  executionDescription?: string
 }

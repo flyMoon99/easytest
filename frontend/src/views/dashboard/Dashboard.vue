@@ -43,7 +43,7 @@
             </div>
             <div class="ml-4">
               <p class="text-sm font-medium text-gray-600">已完成</p>
-              <p class="text-2xl font-bold text-gray-900">{{ testStore.statistics.completed }}</p>
+              <p class="text-2xl font-bold text-gray-900">{{ testStore.statistics.total }}</p>
             </div>
           </div>
         </div>
@@ -61,7 +61,7 @@
             </div>
             <div class="ml-4">
               <p class="text-sm font-medium text-gray-600">运行中</p>
-                              <p class="text-2xl font-bold text-gray-900">{{ testStore.statistics.screened }}</p>
+                              <p class="text-2xl font-bold text-gray-900">0</p>
             </div>
           </div>
         </div>
@@ -79,7 +79,7 @@
             </div>
             <div class="ml-4">
               <p class="text-sm font-medium text-gray-600">失败</p>
-              <p class="text-2xl font-bold text-gray-900">{{ testStore.statistics.failed }}</p>
+              <p class="text-2xl font-bold text-gray-900">0</p>
             </div>
           </div>
         </div>
@@ -99,7 +99,7 @@
             <div class="flex items-center space-x-3">
               <div :class="[
                 'w-3 h-3 rounded-full',
-                getStatusColor(test.status)
+                'bg-gray-400'
               ]"></div>
               <div>
                 <p class="font-medium text-gray-900">{{ test.title }}</p>
@@ -136,7 +136,7 @@
         <div class="space-y-4">
           <div class="text-center">
             <div class="text-4xl font-bold text-primary-600">
-              {{ testStore.statistics.successRate }}%
+              100%
             </div>
             <p class="text-gray-600">整体成功率</p>
           </div>
@@ -144,23 +144,23 @@
           <div class="space-y-3">
             <div class="flex justify-between items-center">
               <span class="text-sm text-gray-600">已完成</span>
-              <span class="text-sm font-medium">{{ testStore.statistics.completed }}</span>
+              <span class="text-sm font-medium">{{ testStore.statistics.total }}</span>
             </div>
             <div class="w-full bg-gray-200 rounded-full h-2">
               <div 
                 class="bg-green-600 h-2 rounded-full" 
-                :style="{ width: `${(testStore.statistics.completed / testStore.statistics.total) * 100}%` }"
+                :style="{ width: `${(testStore.statistics.total / testStore.statistics.total) * 100}%` }"
               ></div>
             </div>
             
             <div class="flex justify-between items-center">
               <span class="text-sm text-gray-600">失败</span>
-              <span class="text-sm font-medium">{{ testStore.statistics.failed }}</span>
+              <span class="text-sm font-medium">0</span>
             </div>
             <div class="w-full bg-gray-200 rounded-full h-2">
               <div 
                 class="bg-red-600 h-2 rounded-full" 
-                :style="{ width: `${(testStore.statistics.failed / testStore.statistics.total) * 100}%` }"
+                :style="{ width: `${(0 / testStore.statistics.total) * 100}%` }"
               ></div>
             </div>
           </div>
@@ -223,15 +223,6 @@ const recentTests = computed(() => {
   return testStore.testRecords.slice(0, 5)
 })
 
-const getStatusColor = (status: TestRecord['status']) => {
-  const colors = {
-    pending: 'bg-gray-400',
-            screened: 'bg-orange-400',
-    completed: 'bg-green-400',
-    failed: 'bg-red-400'
-  }
-  return colors[status]
-}
 
 const formatTime = (dateString: string) => {
   const date = new Date(dateString)

@@ -185,7 +185,11 @@ export const testPlanAPI = {
   
   // 关联测试用例到测试计划
   associateCases: (id: string, caseIds: string[]): Promise<{ success: boolean; data: any; message: string }> => 
-    api.post(`/test-plans/${id}/associate-cases`, { caseIds })
+    api.post(`/test-plans/${id}/associate-cases`, { caseIds }),
+  
+  // 更新测试计划用例的执行结果
+  updateTestCaseResult: (testPlanId: string, caseId: string, data: any): Promise<{ success: boolean; data: any; message: string }> => 
+    api.put(`/test-plans/${testPlanId}/cases/${caseId}/result`, data)
 }
 
 // 通用API
