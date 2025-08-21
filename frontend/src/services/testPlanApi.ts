@@ -103,5 +103,14 @@ export const testPlanAPI = {
    * @param caseIds 测试用例ID数组
    */
   associateCases: (id: string, caseIds: string[]): Promise<{ success: boolean; message: string; data: any }> => 
-    api.post(`/test-plans/${id}/associate-cases`, { caseIds })
+    api.post(`/test-plans/${id}/associate-cases`, { caseIds }),
+
+  /**
+   * 更新测试计划用例的执行结果
+   * @param testPlanId 测试计划ID
+   * @param caseId 测试用例ID
+   * @param data 执行结果数据
+   */
+  updateTestCaseResult: (testPlanId: string, caseId: string, data: { result: string; executionDescription?: string }): Promise<{ success: boolean; message: string; data: any }> => 
+    api.put(`/test-plans/${testPlanId}/cases/${caseId}/result`, data)
 }

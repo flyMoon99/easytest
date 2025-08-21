@@ -283,6 +283,7 @@
     :visible="showParseModal"
     :video-name="currentParseVideoName"
     :video-id="currentParseVideoId"
+    :prompt="currentParsePrompt"
     @close="handleCloseParseModal"
     @retry="handleRetryParseStream"
   />
@@ -304,6 +305,7 @@ import type { VideoRecord } from '@/types/video'
 import BaseVideoPlayer from '@/components/base/BaseVideoPlayer.vue'
 import BaseParseModal from '@/components/base/BaseParseModal.vue'
 import BaseParseResultModal from '@/components/base/BaseParseResultModal.vue'
+import config from '@/config'
 
 const videoStore = useVideoStore()
 
@@ -325,6 +327,7 @@ const currentVideoDuration = ref(0)
 const showParseModal = ref(false)
 const currentParseVideoName = ref('')
 const currentParseVideoId = ref('')
+const currentParsePrompt = ref('') // 新增：当前解析的提示词
 const parseModalRef = ref()
 
 // 解析结果弹窗相关状态
@@ -486,6 +489,13 @@ const handleParseWithGeminiStream = async (videoId: string, videoName: string) =
         if (parseModalRef.value) {
           parseModalRef.value.updateRawResponse(response)
         }
+      },
+      // 提示词回调
+      (prompt) => {
+        console.log('收到Gemini提示词:', prompt)
+        console.log('提示词长度:', prompt?.length)
+        currentParsePrompt.value = prompt
+        console.log('currentParsePrompt已更新:', currentParsePrompt.value)
       }
     )
     
@@ -511,6 +521,7 @@ const handleCloseParseModal = () => {
   showParseModal.value = false
   currentParseVideoId.value = ''
   currentParseVideoName.value = ''
+  currentParsePrompt.value = '' // 清空提示词
   videoStore.clearStreamState()
 }
 
@@ -550,8 +561,8 @@ const handlePlayVideo = async (video: VideoRecord) => {
     fileName = pathParts[pathParts.length - 1] || video.originalName
   }
   
-  // 构建视频URL
-  const videoUrl = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001'}/videos/${fileName}`
+  // 构建视频URL - 使用全局配置
+  const videoUrl = `${config.video.videoPath}/${fileName}`
   
   console.log('播放视频:', {
     videoName: video.name,
@@ -563,7 +574,7 @@ const handlePlayVideo = async (video: VideoRecord) => {
   
   // 先检查文件是否存在（调试用）
   try {
-    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001'}/api/videos/${video.id}/check-file`, {
+    const response = await fetch(`${config.api.apiURL}/videos/${video.id}/check-file`, {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('token')}`
       }

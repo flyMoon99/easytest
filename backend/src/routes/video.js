@@ -432,8 +432,27 @@ router.post('/:id/parse-with-gemini', authenticateToken, async (req, res) => {
       // 导入Gemini分析服务
       const { analyzeVideoWithGemini } = await import('../services/aiService.js');
       
+      // 获取关联的测试用例信息
+      const TestCase = (await import('../models/TestCase.js')).default;
+      const testCase = await TestCase.findOne({ _id: video.testCaseId });
+      
+      // 构建测试用例信息
+      let testCaseInfo = '';
+      if (testCase) {
+        testCaseInfo = `
+关联测试用例信息：
+- 用例名称：${testCase.title}
+- 用例描述：${testCase.description || '无描述'}
+- 用例等级：${testCase.level || '未设置'}
+- 入口URL：${testCase.entryUrl || '未设置'}
+`;
+      }
+      
+      // 合并测试说明和测试用例信息
+      const enhancedTestDescription = `${video.testDescription || ''}\n${testCaseInfo}`.trim();
+      
       // 调用Gemini分析
-      const analysisResult = await analyzeVideoWithGemini(video.filePath, video.name, req.user._id, video._id, video.testDescription);
+      const analysisResult = await analyzeVideoWithGemini(video.filePath, video.name, req.user._id, video._id, enhancedTestDescription);
       
       if (analysisResult.success) {
         // 确保分析结果符合MongoDB模型要求
@@ -591,6 +610,56 @@ router.post('/:id/parse-stream', authenticateToken, async (req, res) => {
         timestamp: new Date().toISOString()
       })}\n\n`);
 
+      // 获取关联的测试用例信息
+      res.write(`data: ${JSON.stringify({
+        type: 'progress',
+        step: '获取测试用例信息',
+        progress: 30,
+        message: '正在获取关联的测试用例信息...',
+        timestamp: new Date().toISOString()
+      })}\n\n`);
+
+      const TestCase = (await import('../models/TestCase.js')).default;
+      const testCase = await TestCase.findOne({ _id: video.testCaseId });
+      
+      // 构建测试用例信息
+      let testCaseInfo = '';
+      if (testCase) {
+        testCaseInfo = `
+关联测试用例信息：
+- 用例名称：${testCase.title}
+- 用例描述：${testCase.description || '无描述'}
+- 用例等级：${testCase.level || '未设置'}
+- 入口URL：${testCase.entryUrl || '未设置'}
+`;
+        
+        res.write(`data: ${JSON.stringify({
+          type: 'info',
+          message: `已获取测试用例信息: ${testCase.title}`,
+          timestamp: new Date().toISOString()
+        })}\n\n`);
+      }
+
+      // 合并测试说明和测试用例信息
+      const enhancedTestDescription = `${video.testDescription || ''}\n${testCaseInfo}`.trim();
+      
+      // 获取Gemini提示词
+      const { getGeminiVideoPrompt } = await import('../services/promptService.js');
+      const prompt = getGeminiVideoPrompt(video.name, enhancedTestDescription);
+      
+      console.log('生成的提示词长度:', prompt.length);
+      console.log('提示词前100字符:', prompt.substring(0, 100));
+      
+      // 发送提示词信息
+      res.write(`data: ${JSON.stringify({
+        type: 'prompt',
+        message: 'Gemini提示词已生成',
+        prompt: prompt,
+        timestamp: new Date().toISOString()
+      })}\n\n`);
+      
+      console.log('提示词消息已发送');
+
       // 发送API调用消息
       res.write(`data: ${JSON.stringify({
         type: 'progress',
@@ -601,7 +670,7 @@ router.post('/:id/parse-stream', authenticateToken, async (req, res) => {
       })}\n\n`);
 
       // 调用Gemini分析
-      const analysisResult = await analyzeVideoWithGemini(video.filePath, video.name, req.user._id, video._id);
+      const analysisResult = await analyzeVideoWithGemini(video.filePath, video.name, req.user._id, video._id, enhancedTestDescription);
       
       // 发送分析完成消息
       res.write(`data: ${JSON.stringify({

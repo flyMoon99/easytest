@@ -301,6 +301,7 @@ import { reactive, onMounted, ref } from 'vue'
 import { useTestResultStore } from '@/stores/testResult'
 import type { TestResult } from '@/types/testResult'
 import BaseVideoPlayer from '@/components/base/BaseVideoPlayer.vue'
+import config from '@/config'
 
 const testResultStore = useTestResultStore()
 
@@ -418,8 +419,8 @@ const handlePlayVideo = async (testResult: TestResult) => {
     fileName = pathParts[pathParts.length - 1] || testResult.video.originalName
   }
   
-  // 构建视频URL
-  const videoUrl = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001'}/videos/${fileName}`
+  // 构建视频URL - 使用全局配置
+  const videoUrl = `${config.video.videoPath}/${fileName}`
   
   // 设置播放弹窗数据
   currentVideoUrl.value = videoUrl
@@ -463,6 +464,15 @@ const handleProcessTestResult = async (testResult: TestResult) => {
 
 // 删除测试结果
 const handleDeleteTestResult = async (id: string) => {
+  console.log('删除测试结果，ID:', id, '类型:', typeof id)
+  
+  // 检查ID是否有效
+  if (!id || id === 'undefined' || id === 'null') {
+    console.error('无效的测试结果ID:', id)
+    alert('无效的测试结果ID，无法删除')
+    return
+  }
+  
   if (confirm('确定要删除这个测试结果吗？此操作不可恢复。')) {
     try {
       await testResultStore.deleteTestResult(id)

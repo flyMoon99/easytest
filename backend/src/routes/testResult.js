@@ -20,7 +20,7 @@ router.get('/', authenticateToken, async (req, res) => {
       search 
     } = req.query;
     
-    const memberId = req.user.id;
+    const memberId = req.user._id;
     const skip = (parseInt(page) - 1) * parseInt(limit);
     
     // 构建查询条件
@@ -90,7 +90,7 @@ router.get('/', authenticateToken, async (req, res) => {
 router.get('/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
-    const memberId = req.user.id;
+    const memberId = req.user._id;
     
     const testResult = await TestResult.findOne({ _id: id, memberId })
       .populate('videoId', 'name originalName filePath mimeType fileSize');
@@ -115,7 +115,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
 // 创建测试结果
 router.post('/', authenticateToken, async (req, res) => {
   try {
-    const memberId = req.user.id;
+    const memberId = req.user._id;
     const { videoId, issue, impact, recommendation, severity, category } = req.body;
     
     // 验证视频是否存在且属于当前用户
@@ -147,7 +147,7 @@ router.post('/', authenticateToken, async (req, res) => {
 // 批量创建测试结果
 router.post('/batch', authenticateToken, async (req, res) => {
   try {
-    const memberId = req.user.id;
+    const memberId = req.user._id;
     const { videoId, testResults } = req.body;
     
     // 验证视频是否存在且属于当前用户
@@ -189,7 +189,7 @@ router.post('/batch', authenticateToken, async (req, res) => {
 router.put('/:id/status', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
-    const memberId = req.user.id;
+    const memberId = req.user._id;
     const { status, processingNote } = req.body;
     
     const testResult = await TestResult.findOne({ _id: id, memberId });
@@ -212,7 +212,7 @@ router.put('/:id/status', authenticateToken, async (req, res) => {
 router.put('/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
-    const memberId = req.user.id;
+    const memberId = req.user._id;
     const { issue, impact, recommendation, severity, category } = req.body;
     
     const testResult = await TestResult.findOne({ _id: id, memberId });
@@ -242,7 +242,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
 router.delete('/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
-    const memberId = req.user.id;
+    const memberId = req.user._id;
     
     const testResult = await TestResult.findOne({ _id: id, memberId });
     
@@ -263,7 +263,7 @@ router.delete('/:id', authenticateToken, async (req, res) => {
 // 获取测试结果统计信息
 router.get('/statistics/summary', authenticateToken, async (req, res) => {
   try {
-    const memberId = req.user.id;
+    const memberId = req.user._id;
     
     const statistics = await TestResult.getStatistics(memberId);
     

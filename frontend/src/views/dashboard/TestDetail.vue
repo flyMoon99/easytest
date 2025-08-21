@@ -122,7 +122,7 @@
           <template v-if="currentTest?.screenshotUrl">
             <div class="border border-gray-200 rounded-lg overflow-hidden">
               <img
-                :src="currentTest.screenshotUrl.startsWith('http') ? currentTest.screenshotUrl : `http://localhost:10061${currentTest.screenshotUrl}`"
+                :src="currentTest.screenshotUrl.startsWith('http') ? currentTest.screenshotUrl : `${config.static.screenshotPath}${currentTest.screenshotUrl}`"
                 :alt="`${currentTest.title} 截图`"
                 class="w-full h-auto"
                 @error="handleImageError"
@@ -192,6 +192,7 @@ import BaseButton from '@/components/base/BaseButton.vue'
 import BaseCard from '@/components/base/BaseCard.vue'
 import BaseModal from '@/components/base/BaseModal.vue'
 import type { TestRecord } from '@/types'
+import config from '@/config'
 
 const router = useRouter()
 const route = useRoute()

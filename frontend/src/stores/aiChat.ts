@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import axios from 'axios'
 import { useAuthStore } from './auth'
+import config from '@/config'
 
 export const useAiChatStore = defineStore('aiChat', () => {
   // 状态
@@ -13,8 +14,8 @@ export const useAiChatStore = defineStore('aiChat', () => {
 
   // 创建axios实例
   const api = axios.create({
-    baseURL: 'http://localhost:10061/api',
-    timeout: 120000,
+    baseURL: config.api.apiURL,
+    timeout: config.api.timeout,
     headers: {
       'Content-Type': 'application/json'
     }
@@ -81,7 +82,7 @@ export const useAiChatStore = defineStore('aiChat', () => {
     try {
       const token = authStore.token || localStorage.getItem('token') || sessionStorage.getItem('token')
       
-      const response = await fetch('http://localhost:10061/api/ai-chat/stream', {
+      const response = await fetch(`${config.api.apiURL}/ai-chat/stream`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

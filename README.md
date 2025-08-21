@@ -105,8 +105,8 @@ npm run dev
 ```
 
 ### 访问应用
-- 前端: http://localhost:5173
-- 后端API: http://localhost:3000
+- 前端: http://localhost:10060
+- 后端API: http://localhost:10061
 
 ## 项目结构
 

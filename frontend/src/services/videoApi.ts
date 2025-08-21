@@ -1,4 +1,5 @@
 import api from './api'
+import config from '@/config'
 import type { 
   VideoRecord, 
   VideoForm, 
@@ -69,13 +70,12 @@ export const videoAPI = {
   ): Promise<void> => {
     try {
       const token = localStorage.getItem('token') || sessionStorage.getItem('token')
-      const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:10061'
       
       if (!token) {
         throw new Error('未找到认证令牌，请重新登录')
       }
       
-      let response = await fetch(`${baseURL}/api/videos/${id}/parse-stream`, {
+      let response = await fetch(`${config.api.apiURL}/videos/${id}/parse-stream`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -86,7 +86,7 @@ export const videoAPI = {
       // 如果是401错误，尝试刷新token并重试
       if (response.status === 401) {
         try {
-          const refreshResponse = await fetch(`${baseURL}/api/auth/refresh`, {
+          const refreshResponse = await fetch(`${config.api.apiURL}/auth/refresh`, {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -103,7 +103,7 @@ export const videoAPI = {
             storage.setItem('token', newToken)
             
             // 重新发送请求
-            response = await fetch(`${baseURL}/api/videos/${id}/parse-stream`, {
+            response = await fetch(`${config.api.apiURL}/videos/${id}/parse-stream`, {
               method: 'POST',
               headers: {
                 'Authorization': `Bearer ${newToken}`,

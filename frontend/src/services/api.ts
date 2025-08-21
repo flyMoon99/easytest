@@ -2,11 +2,12 @@ import axios from 'axios'
 import type { AxiosInstance, AxiosResponse } from 'axios'
 import type { LoginForm, RegisterForm, AuthResponse } from '@/types/auth'
 import type { TestRecord, TestForm, AnalyzeResponsePayload } from '@/types/test'
+import config from '@/config'
 
 // 创建axios实例
 const api: AxiosInstance = axios.create({
-  baseURL: 'http://localhost:10061/api',
-  timeout: 120000, // 增加到120秒，适应AI分析的时间需求
+  baseURL: config.api.apiURL,
+  timeout: config.api.timeout,
   headers: {
     'Content-Type': 'application/json'
   }

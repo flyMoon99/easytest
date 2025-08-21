@@ -242,7 +242,8 @@ export const useVideoStore = defineStore('video', () => {
     onLog?: (log: string) => void,
     onComplete?: (analysis: unknown) => void,
     onError?: (error: string) => void,
-    onRawResponse?: (response: string) => void
+    onRawResponse?: (response: string) => void,
+    onPrompt?: (prompt: string) => void
   ) => {
     isStreaming.value = true
     streamProgress.value = 0
@@ -293,6 +294,11 @@ export const useVideoStore = defineStore('video', () => {
             case 'raw_response':
               onLog?.(`原始响应: ${data.message}`)
               onRawResponse?.(data.content || data.message)
+              break
+              
+            case 'prompt':
+              onLog?.(`提示词: ${data.message}`)
+              onPrompt?.(data.prompt)
               break
           }
         },

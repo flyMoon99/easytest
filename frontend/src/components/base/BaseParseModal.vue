@@ -92,6 +92,36 @@
             </div>
           </div>
           
+          <!-- Gemini提示词 -->
+          <div v-if="props.prompt" class="mt-4">
+            <!-- 调试信息 -->
+            <div class="text-xs text-gray-500 mb-1">调试: 提示词长度 {{ props.prompt?.length || 0 }}</div>
+            <div class="flex items-center justify-between mb-2">
+              <div class="text-sm font-medium text-gray-700">Gemini提示词:</div>
+              <button
+                @click="showPrompt = !showPrompt"
+                class="text-xs text-blue-600 hover:text-blue-500 flex items-center"
+              >
+                <span>{{ showPrompt ? '隐藏' : '显示' }}</span>
+                <svg 
+                  class="w-3 h-3 ml-1 transition-transform" 
+                  :class="{ 'rotate-180': showPrompt }"
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+            </div>
+            <div 
+              v-show="showPrompt"
+              class="bg-blue-50 border border-blue-200 rounded p-3 max-h-48 overflow-y-auto"
+            >
+              <pre class="text-xs text-blue-800 whitespace-pre-wrap font-mono">{{ props.prompt }}</pre>
+            </div>
+          </div>
+
           <!-- Gemini原始响应内容 -->
           <div v-if="rawResponse" class="mt-4">
             <div class="text-sm font-medium text-gray-700 mb-2">Gemini原始响应:</div>
@@ -143,6 +173,7 @@ interface Props {
   visible: boolean
   videoName: string
   videoId: string
+  prompt?: string // 新增：Gemini提示词
 }
 
 interface Emits {
@@ -159,6 +190,7 @@ const progress = ref(0)
 const currentStep = ref('准备中...')
 const parseLogs = ref<ParseLog[]>([])
 const rawResponse = ref('')
+const showPrompt = ref(false) // 新增：控制提示词显示
 
 // 计算属性
 const statusText = computed(() => {
@@ -231,6 +263,7 @@ watch(() => props.visible, (newVisible) => {
     currentStep.value = '准备中...'
     parseLogs.value = []
     rawResponse.value = '' // 重置原始响应
+    showPrompt.value = false // 重置提示词显示状态
     
     // 开始解析流程
     startParseProcess()
