@@ -137,7 +137,7 @@
       </BaseButton>
       <BaseButton
         v-else
-        variant="danger"
+        variant="error"
         @click="handleStopExecution"
         :loading="loading"
       >
@@ -213,12 +213,9 @@ const loadPWTestStatus = async () => {
     loading.value = true
     const response = await pwTestApi.getStatus(props.testCase.id)
     
-    if (response.success) {
-      const status = response.data
-      if (status.hasGeneratedCode) {
-        // 如果有生成的代码，显示代码预览
-        generatedCode.value = status.generatedCode?.fullScript || ''
-      }
+    if (response && response.hasGeneratedCode) {
+      // 如果有生成的代码，显示代码预览
+      generatedCode.value = response.generatedCode?.fullScript || ''
     }
   } catch (error) {
     console.error('加载PW测试状态失败:', error)
@@ -247,20 +244,20 @@ const handleRunPWTest = async () => {
       browserType: config.value.browserType
     })
     
-    if (response.success) {
-      executionResult.value = response.data.executionResult
-      generatedCode.value = response.data.generatedCode?.fullScript || ''
+    if (response && response.executionResult) {
+      executionResult.value = response.executionResult
+      generatedCode.value = response.generatedCode?.fullScript || ''
       
       // 模拟执行过程
       simulateExecutionProcess()
     } else {
       executionResult.value = {
         success: false,
-        error: { message: response.message || '执行失败' }
+        error: { message: '执行失败' }
       }
     }
     
-    emit('success', response.data)
+    emit('success', response)
     
   } catch (error) {
     console.error('PW测试执行失败:', error)

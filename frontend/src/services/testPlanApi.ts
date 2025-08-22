@@ -5,8 +5,7 @@ import type {
   UpdateTestPlanForm,
   TestPlanQueryParams,
   TestPlanListResponse,
-  TestPlanResponse,
-  TestPlanListAPIResponse
+  TestPlanStatistics
 } from '@/types/testPlan'
 
 /**
@@ -17,7 +16,12 @@ export const testPlanAPI = {
    * 获取测试计划列表
    * @param params 查询参数
    */
-  getList: (params: TestPlanQueryParams = {}): Promise<TestPlanListAPIResponse> => {
+  getList: (params: TestPlanQueryParams = {}): Promise<{
+    success: boolean;
+    message: string;
+    data: TestPlanListResponse;
+    timestamp: string;
+  }> => {
     const queryParams = new URLSearchParams()
     
     if (params.page) {
@@ -47,14 +51,14 @@ export const testPlanAPI = {
    * 获取测试计划详情
    * @param id 测试计划ID
    */
-  getDetail: (id: string): Promise<TestPlanResponse> => 
+  getDetail: (id: string): Promise<TestPlan> => 
     api.get(`/test-plans/${id}`),
 
   /**
    * 创建测试计划
    * @param data 测试计划数据
    */
-  create: (data: CreateTestPlanForm): Promise<TestPlanResponse> => 
+  create: (data: CreateTestPlanForm): Promise<TestPlan> => 
     api.post('/test-plans', data),
 
   /**
@@ -62,7 +66,7 @@ export const testPlanAPI = {
    * @param id 测试计划ID
    * @param data 更新数据
    */
-  update: (id: string, data: UpdateTestPlanForm): Promise<TestPlanResponse> => 
+  update: (id: string, data: UpdateTestPlanForm): Promise<TestPlan> => 
     api.put(`/test-plans/${id}`, data),
 
   /**
@@ -75,7 +79,7 @@ export const testPlanAPI = {
   /**
    * 获取测试计划统计信息
    */
-  getStatistics: (): Promise<{ success: boolean; message: string; data: any }> => 
+  getStatistics: (): Promise<{ success: boolean; message: string; data: TestPlanStatistics }> => 
     api.get('/test-plans/statistics'),
 
   /**
@@ -83,7 +87,7 @@ export const testPlanAPI = {
    * @param id 测试计划ID
    * @param params 查询参数
    */
-  getRelatedCases: (id: string, params: { page?: number; limit?: number } = {}): Promise<{ success: boolean; message: string; data: any }> => {
+  getRelatedCases: (id: string, params: { page?: number; limit?: number } = {}): Promise<{ success: boolean; message: string; data: { testCases: unknown[]; pagination: { page: number; limit: number; total: number; totalPages: number } } }> => {
     const queryParams = new URLSearchParams()
     
     if (params.page) {
@@ -102,7 +106,7 @@ export const testPlanAPI = {
    * @param id 测试计划ID
    * @param caseIds 测试用例ID数组
    */
-  associateCases: (id: string, caseIds: string[]): Promise<{ success: boolean; message: string; data: any }> => 
+  associateCases: (id: string, caseIds: string[]): Promise<{ success: boolean; message: string; data: { associatedCount: number } }> => 
     api.post(`/test-plans/${id}/associate-cases`, { caseIds }),
 
   /**
@@ -111,6 +115,6 @@ export const testPlanAPI = {
    * @param caseId 测试用例ID
    * @param data 执行结果数据
    */
-  updateTestCaseResult: (testPlanId: string, caseId: string, data: { result: string; executionDescription?: string }): Promise<{ success: boolean; message: string; data: any }> => 
+  updateTestCaseResult: (testPlanId: string, caseId: string, data: { result: string; executionDescription?: string }): Promise<{ success: boolean; message: string; data: unknown }> => 
     api.put(`/test-plans/${testPlanId}/cases/${caseId}/result`, data)
 }

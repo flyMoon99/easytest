@@ -49,18 +49,33 @@ export const useTestPlanStore = defineStore('testPlan', () => {
       const response = await testPlanAPI.getList(params)
       
       // 添加安全检查
-      if (!response || !response.data) {
+      if (!response) {
         throw new Error('API响应格式错误')
       }
       
-      testPlans.value = response.data.testPlans || []
-      pagination.value = response.data.pagination || {
+      // 确保testPlans是数组并且触发响应式更新
+      const testPlansArray = response.data && response.data.testPlans ? response.data.testPlans : []
+      
+      // 验证和清理数据
+      const validatedTestPlans = testPlansArray.map((plan: TestPlan) => {
+        // 确保每个计划都有id字段
+        if (!plan.id) {
+          console.warn('测试计划缺少id字段:', plan)
+        }
+        return plan
+      })
+      
+      // 清空数组然后重新赋值，确保响应式更新
+      testPlans.value = []
+      testPlans.value = [...validatedTestPlans]
+      
+      pagination.value = response.data?.pagination || {
         page: 1,
         limit: 10,
         total: 0,
         totalPages: 0
       }
-      statistics.value = response.data.statistics || {
+      statistics.value = response.data?.statistics || {
         total: 0,
         draft: 0,
         active: 0,
@@ -68,7 +83,7 @@ export const useTestPlanStore = defineStore('testPlan', () => {
         cancelled: 0
       }
       
-      return response.data
+      return response
     } catch (err) {
       error.value = err instanceof Error ? err.message : '获取测试计划列表失败'
       // 设置默认值
@@ -103,13 +118,13 @@ export const useTestPlanStore = defineStore('testPlan', () => {
       const response = await testPlanAPI.getDetail(id)
       
       // 添加安全检查
-      if (!response || !response.data) {
+      if (!response) {
         throw new Error('API响应格式错误')
       }
       
-      currentTestPlan.value = response.data
+      currentTestPlan.value = response
       
-      return response.data
+      return response
     } catch (err) {
       error.value = err instanceof Error ? err.message : '获取测试计划详情失败'
       currentTestPlan.value = null
@@ -128,7 +143,7 @@ export const useTestPlanStore = defineStore('testPlan', () => {
       error.value = null
       
       const response = await testPlanAPI.create(data)
-      const newTestPlan = response.data
+      const newTestPlan = response
       
       // 添加到列表开头
       testPlans.value.unshift(newTestPlan)
@@ -154,7 +169,7 @@ export const useTestPlanStore = defineStore('testPlan', () => {
       error.value = null
       
       const response = await testPlanAPI.update(id, data)
-      const updatedTestPlan = response.data
+      const updatedTestPlan = response
       
       // 更新列表中的数据
       const index = testPlans.value.findIndex(plan => plan.id === id)

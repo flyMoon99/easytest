@@ -278,10 +278,12 @@ import BaseButton from '@/components/base/BaseButton.vue'
 import BaseCard from '@/components/base/BaseCard.vue'
 import BaseInput from '@/components/base/BaseInput.vue'
 import BaseModal from '@/components/base/BaseModal.vue'
+import { useAuthStore } from '@/stores/auth'
 
 
 const router = useRouter()
 const testPlanStore = useTestPlanStore()
+const authStore = useAuthStore()
 
 // 状态
 const searchKeyword = ref('')
@@ -374,6 +376,11 @@ const formatDateTime = (dateString: string) => {
 
 // 生命周期
 onMounted(() => {
+  if (!authStore.isAuthenticated) {
+    router.push('/login')
+    return
+  }
+  
   loadTestPlans()
 })
 </script>
