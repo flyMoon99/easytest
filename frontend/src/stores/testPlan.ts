@@ -118,13 +118,29 @@ export const useTestPlanStore = defineStore('testPlan', () => {
       const response = await testPlanAPI.getDetail(id)
       
       // 添加安全检查
-      if (!response) {
-        throw new Error('API响应格式错误')
+      if (!response || !response.success || !response.data) {
+        throw new Error('API响应格式错误或数据为空')
       }
       
-      currentTestPlan.value = response
+      // 验证必要字段
+      const testPlan = response.data
+      if (!testPlan.id || !testPlan.status) {
+        throw new Error('测试计划数据不完整')
+      }
       
-      return response
+      // 确保statistics字段存在
+      if (!testPlan.statistics) {
+        testPlan.statistics = {
+          totalCases: 0,
+          completedCases: 0,
+          failedCases: 0,
+          successRate: 0
+        }
+      }
+      
+      currentTestPlan.value = testPlan
+      
+      return testPlan
     } catch (err) {
       error.value = err instanceof Error ? err.message : '获取测试计划详情失败'
       currentTestPlan.value = null

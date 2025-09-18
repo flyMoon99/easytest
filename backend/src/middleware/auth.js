@@ -7,8 +7,17 @@ import Member from '../models/Member.js';
  */
 export const authenticateToken = async (req, res, next) => {
   try {
+    // 优先从Authorization头部获取token
+    let token = null;
     const authHeader = req.headers.authorization;
-    const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+    if (authHeader) {
+      token = authHeader.split(' ')[1]; // Bearer TOKEN
+    }
+    
+    // 如果头部没有token，尝试从URL参数获取（用于SSE连接）
+    if (!token && req.query.token) {
+      token = req.query.token;
+    }
     
     if (!token) {
       return authErrorResponse(res, '访问令牌缺失');

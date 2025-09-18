@@ -53,6 +53,23 @@
       </div>
     </div>
 
+    <!-- 错误状态 -->
+    <div v-else-if="testPlanStore.error" class="text-center py-12">
+      <svg class="mx-auto h-12 w-12 text-red-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+        <path d="M34 40h10v-4a6 6 0 00-10.712-3.714M34 40H14m20 0v-4a9.971 9.971 0 00-.712-3.714M14 40H4v-4a6 6 0 0110.713-3.714M14 40v-4c0-1.313.253-2.566.713-3.714m0 0A9.971 9.971 0 0118 28c2.624 0 4.928 1.006 6.713 2.714M30 20a6 6 0 11-12 0 6 6 0 0112 0z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+      <h3 class="mt-2 text-lg font-medium text-gray-900">加载失败</h3>
+      <p class="mt-1 text-gray-500">{{ testPlanStore.error }}</p>
+      <div class="mt-6 space-x-2">
+        <BaseButton @click="retryLoad">
+          重新加载
+        </BaseButton>
+        <BaseButton variant="outline" @click="router.push('/dashboard/test-plan/list')">
+          返回测试计划列表
+        </BaseButton>
+      </div>
+    </div>
+
     <!-- 测试计划不存在 -->
     <div v-else-if="!currentTestPlan" class="text-center py-12">
       <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
@@ -82,7 +99,7 @@
                 </div>
                 <div>
                   <h4 class="text-sm font-medium text-gray-500 mb-2">状态</h4>
-                  <span :class="[
+                  <span v-if="currentTestPlan?.status && TEST_PLAN_STATUS_CONFIG[currentTestPlan.status]" :class="[
                     'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
                     TEST_PLAN_STATUS_CONFIG[currentTestPlan.status].color
                   ]">
@@ -91,6 +108,10 @@
                       TEST_PLAN_STATUS_CONFIG[currentTestPlan.status].dotColor
                     ]"></span>
                     {{ TEST_PLAN_STATUS_CONFIG[currentTestPlan.status].label }}
+                  </span>
+                  <span v-else class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                    <span class="w-1.5 h-1.5 rounded-full mr-1.5 bg-gray-400"></span>
+                    未知状态
                   </span>
                 </div>
                 <div>
@@ -136,7 +157,7 @@
             <div class="space-y-4">
               <div class="text-center">
                 <div class="text-3xl font-bold text-primary-600">
-                  {{ currentTestPlan.statistics.successRate }}%
+                  {{ currentTestPlan?.statistics?.successRate || 0 }}%
                 </div>
                 <div class="text-sm text-gray-500">成功率</div>
               </div>
@@ -144,20 +165,20 @@
               <div class="space-y-2">
                 <div class="flex justify-between text-sm">
                   <span class="text-gray-600">总用例数</span>
-                  <span class="font-medium">{{ currentTestPlan.statistics.totalCases }}</span>
+                  <span class="font-medium">{{ currentTestPlan?.statistics?.totalCases || 0 }}</span>
                 </div>
                 <div class="flex justify-between text-sm">
                   <span class="text-gray-600">已完成</span>
-                  <span class="font-medium text-green-600">{{ currentTestPlan.statistics.completedCases }}</span>
+                  <span class="font-medium text-green-600">{{ currentTestPlan?.statistics?.completedCases || 0 }}</span>
                 </div>
                 <div class="flex justify-between text-sm">
                   <span class="text-gray-600">失败</span>
-                  <span class="font-medium text-red-600">{{ currentTestPlan.statistics.failedCases }}</span>
+                  <span class="font-medium text-red-600">{{ currentTestPlan?.statistics?.failedCases || 0 }}</span>
                 </div>
                 <div class="flex justify-between text-sm">
                   <span class="text-gray-600">未开始</span>
                   <span class="font-medium text-gray-600">
-                    {{ currentTestPlan.statistics.totalCases - currentTestPlan.statistics.completedCases - currentTestPlan.statistics.failedCases }}
+                    {{ Math.max(0, (currentTestPlan?.statistics?.totalCases || 0) - (currentTestPlan?.statistics?.completedCases || 0) - (currentTestPlan?.statistics?.failedCases || 0)) }}
                   </span>
                 </div>
               </div>
@@ -172,13 +193,13 @@
                   </div>
                   <div class="text-right">
                     <span class="text-xs font-semibold inline-block text-primary-600">
-                      {{ Math.round((currentTestPlan.statistics.completedCases / Math.max(currentTestPlan.statistics.totalCases, 1)) * 100) }}%
+                      {{ Math.round(((currentTestPlan?.statistics?.completedCases || 0) / Math.max((currentTestPlan?.statistics?.totalCases || 0), 1)) * 100) }}%
                     </span>
                   </div>
                 </div>
                 <div class="overflow-hidden h-2 mb-4 text-xs flex rounded bg-gray-200">
                   <div 
-                    :style="{ width: `${Math.round((currentTestPlan.statistics.completedCases / Math.max(currentTestPlan.statistics.totalCases, 1)) * 100)}%` }" 
+                    :style="{ width: `${Math.round(((currentTestPlan?.statistics?.completedCases || 0) / Math.max((currentTestPlan?.statistics?.totalCases || 0), 1)) * 100)}%` }" 
                     class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-primary-500"
                   ></div>
                 </div>
@@ -329,6 +350,16 @@ const createTestCase = () => {
 const exportReport = () => {
   // TODO: 实现导出报告功能
   console.log('导出报告')
+}
+
+const retryLoad = async () => {
+  if (testPlanId.value) {
+    try {
+      await testPlanStore.getTestPlanDetail(testPlanId.value)
+    } catch (error) {
+      console.error('重新加载测试计划详情失败:', error)
+    }
+  }
 }
 
 const formatDateTime = (dateString: string) => {

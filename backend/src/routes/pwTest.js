@@ -6,12 +6,89 @@ import {
   executePWTest, 
   parseTestDescription, 
   generatePlaywrightCode, 
-  validateAndOptimizeCode 
+  validateAndOptimizeCode,
+  runStreamingPWTest
 } from '../services/pwTestService.js';
 import TestCase from '../models/TestCase.js';
 import GeneratedCode from '../models/GeneratedCode.js';
 
 const router = express.Router();
+
+/**
+ * 处理SSE连接的OPTIONS请求
+ * OPTIONS /api/pw-test/stream/:testCaseId
+ */
+router.options('/stream/:testCaseId', (req, res) => {
+  res.writeHead(200, {
+    'Access-Control-Allow-Origin': process.env.CORS_ORIGIN || 'http://localhost:10060',
+    'Access-Control-Allow-Credentials': 'true',
+    'Access-Control-Allow-Headers': 'Cache-Control, Authorization, Content-Type',
+    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    'Access-Control-Max-Age': '86400'
+  });
+  res.end();
+});
+
+/**
+ * 流式执行完整的PW测试流程
+ * GET /api/pw-test/stream/:testCaseId
+ */
+router.get('/stream/:testCaseId', authenticateToken, async (req, res) => {
+  try {
+    const { testCaseId } = req.params;
+    const { executionMode, browserType } = req.query;
+    const userId = req.user._id;
+
+    console.log(`开始流式执行PW测试，测试用例ID: ${testCaseId}`);
+
+    // 监控连接状态
+    req.on('close', () => {
+      console.log(`SSE连接已关闭，测试用例ID: ${testCaseId}`);
+    });
+
+    req.on('error', (error) => {
+      console.error(`SSE连接错误，测试用例ID: ${testCaseId}:`, error);
+    });
+
+    // 设置SSE头部
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache, no-transform',
+      'Connection': 'keep-alive',
+      'Access-Control-Allow-Origin': process.env.CORS_ORIGIN || 'http://localhost:10060',
+      'Access-Control-Allow-Credentials': 'true',
+      'Access-Control-Allow-Headers': 'Cache-Control, Authorization, Content-Type',
+      'Access-Control-Allow-Methods': 'GET, OPTIONS',
+      'X-Accel-Buffering': 'no' // 禁用nginx缓冲
+    });
+
+    const options = {
+      executionMode: executionMode || 'headless',
+      browserType: browserType || 'chromium'
+    };
+
+    // 开始流式执行
+    await runStreamingPWTest(testCaseId, userId, options, res);
+
+  } catch (error) {
+    console.error('流式执行PW测试失败:', error);
+    console.error('错误详情:', {
+      message: error.message,
+      stack: error.stack,
+      testCaseId,
+      userId,
+      options
+    });
+    
+    // 发送错误事件
+    res.write(`data: ${JSON.stringify({
+      type: 'error',
+      message: error.message,
+      timestamp: new Date().toISOString()
+    })}\n\n`);
+    res.end();
+  }
+});
 
 /**
  * 执行完整的PW测试流程

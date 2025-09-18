@@ -77,8 +77,43 @@ export const pwTestApi = {
    * @param pwTestConfig 配置信息
    */
   updateConfig: (testCaseId: string, pwTestConfig: any) => 
-    api.put(`/pw-test/config/${testCaseId}`, { pwTestConfig })
+    api.put(`/pw-test/config/${testCaseId}`, { pwTestConfig }),
+
+  /**
+   * 流式执行PW测试
+   * @param testCaseId 测试用例ID
+   * @param options 执行选项
+   */
+  runStreamingTest: (testCaseId: string, options: any = {}): EventSource => {
+    const params = new URLSearchParams({
+      executionMode: options.executionMode || 'headless',
+      browserType: options.browserType || 'chromium'
+    });
+    
+    // 获取认证令牌
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    
+    // 使用正确的API URL
+    const baseURL = api.defaults.baseURL;
+    let url = `${baseURL}/pw-test/stream/${testCaseId}?${params.toString()}`;
+    
+    // 如果使用token认证，将token添加到URL参数中
+    if (token) {
+      url += `&token=${encodeURIComponent(token)}`;
+    }
+    
+    console.log('创建SSE连接:', url);
+    
+    // 创建EventSource连接
+    const eventSource = new EventSource(url, {
+      withCredentials: true
+    });
+    
+    return eventSource;
+  }
 }
+
+
 
 // 类型定义
 export interface PWTestStatus {

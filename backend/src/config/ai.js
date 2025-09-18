@@ -8,9 +8,9 @@ export const getAiConfig = () => ({
     model: process.env.QWEN_MODEL || 'qwen-vl-max',
     maxTokens: 2000,
     temperature: 0.1,
-    timeout: 60000, // 60秒超时
-    maxRetries: 3,  // 最大重试次数
-    retryDelay: 2000 // 重试延迟（毫秒）
+    timeout: parseInt(process.env.QWEN_TIMEOUT) || 120000, // 120秒超时（2分钟）
+    maxRetries: parseInt(process.env.QWEN_MAX_RETRIES) || 5,  // 最大重试次数
+    retryDelay: parseInt(process.env.QWEN_RETRY_DELAY) || 3000 // 重试延迟（毫秒）
   },
   
   // ChatGPT配置
@@ -24,7 +24,8 @@ export const getAiConfig = () => ({
     maxRetries: 3,
     retryDelay: 2000
   },
-  
+  //testKey -08-20
+  //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
   // Gemini 2.0 Flash配置
   gemini: {
     apiKey: process.env.GEMINI_API_KEY || 'your_gemini_api_key_here',

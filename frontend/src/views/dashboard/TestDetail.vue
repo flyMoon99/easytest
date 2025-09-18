@@ -122,7 +122,7 @@
           <template v-if="currentTest?.screenshotUrl">
             <div class="border border-gray-200 rounded-lg overflow-hidden">
               <img
-                :src="currentTest.screenshotUrl.startsWith('http') ? currentTest.screenshotUrl : `${config.static.screenshotPath}${currentTest.screenshotUrl}`"
+                :src="getScreenshotUrl(currentTest.screenshotUrl)"
                 :alt="`${currentTest.title} 截图`"
                 class="w-full h-auto"
                 @error="handleImageError"
@@ -276,6 +276,24 @@ const confirmDelete = async () => {
 }
 
 
+
+// 获取截图URL，避免路径重复
+const getScreenshotUrl = (screenshotUrl: string) => {
+  if (!screenshotUrl) return ''
+  
+  // 如果已经是完整的URL，直接返回
+  if (screenshotUrl.startsWith('http')) {
+    return screenshotUrl
+  }
+  
+  // 如果以/screenshots开头，直接拼接baseURL
+  if (screenshotUrl.startsWith('/screenshots')) {
+    return `${config.api.baseURL}${screenshotUrl}`
+  }
+  
+  // 其他情况，使用完整的screenshotPath
+  return `${config.static.screenshotPath}${screenshotUrl}`
+}
 
 const handleImageError = (event: Event) => {
   const img = event.target as HTMLImageElement

@@ -4,7 +4,6 @@
     @update:model-value="$emit('update:modelValue', $event)"
     title="PW测试执行"
     size="lg"
-    :loading="loading"
   >
     <div class="space-y-6">
       <!-- 测试用例信息 -->
@@ -75,15 +74,22 @@
       <!-- 执行日志 -->
       <div v-if="executionLogs.length > 0" class="bg-gray-50 p-4 rounded-lg">
         <h3 class="text-lg font-medium text-gray-900 mb-2">执行日志</h3>
-        <div class="max-h-40 overflow-y-auto space-y-1">
+        <div class="space-y-2 max-h-60 overflow-y-auto">
           <div
             v-for="(log, index) in executionLogs"
             :key="index"
-            class="text-sm font-mono"
-            :class="getLogClass(log.level)"
+            class="flex items-start space-x-2 p-2 rounded border-l-4"
+            :class="getLogBorderClass(log.level)"
           >
-            <span class="text-gray-500">[{{ formatTime(log.timestamp) }}]</span>
-            <span class="ml-2">{{ log.message }}</span>
+            <div class="flex-shrink-0 w-2 h-2 rounded-full mt-2" :class="getLogDotClass(log.level)"></div>
+            <div class="flex-1 min-w-0">
+              <div class="text-sm font-medium" :class="getLogClass(log.level)">
+                {{ log.message }}
+              </div>
+              <div class="text-xs text-gray-500 mt-1">
+                {{ formatTime(log.timestamp) }}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -211,7 +217,7 @@ const loadPWTestStatus = async () => {
   
   try {
     loading.value = true
-    const response = await pwTestApi.getStatus(props.testCase.id)
+    const response = await pwTestApi.getStatus(props.testCase.testCaseId)
     
     if (response && response.hasGeneratedCode) {
       // 如果有生成的代码，显示代码预览
@@ -228,9 +234,19 @@ const loadPWTestStatus = async () => {
 const handleRunPWTest = async () => {
   if (!props.testCase) return
   
+  console.log('开始执行PW测试，测试用例:', {
+    id: props.testCase.id,
+    testCaseId: props.testCase.testCaseId,
+    title: props.testCase.title,
+    memberId: props.testCase.memberId
+  })
+  
   try {
     loading.value = true
     resetState()
+    
+    // 清空之前的日志
+    executionLogs.value = []
     
     // 开始执行
     executionStatus.value = {
@@ -239,25 +255,46 @@ const handleRunPWTest = async () => {
       duration: 0
     }
     
-    const response = await pwTestApi.runCompleteTest(props.testCase.id, {
+    // 使用流式执行
+    const eventSource = pwTestApi.runStreamingTest(props.testCase.testCaseId, {
       executionMode: config.value.executionMode,
       browserType: config.value.browserType
     })
     
-    if (response && response.executionResult) {
-      executionResult.value = response.executionResult
-      generatedCode.value = response.generatedCode?.fullScript || ''
-      
-      // 模拟执行过程
-      simulateExecutionProcess()
-    } else {
-      executionResult.value = {
-        success: false,
-        error: { message: '执行失败' }
+    // 监听SSE事件
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data)
+        handleSSEEvent(data)
+      } catch (error) {
+        console.error('解析SSE事件失败:', error)
       }
     }
     
-    emit('success', response)
+    eventSource.onerror = (error) => {
+      console.error('SSE连接错误:', error)
+      
+      // 检查连接状态
+      if (eventSource.readyState === EventSource.CLOSED) {
+        console.log('SSE连接已关闭')
+      } else if (eventSource.readyState === EventSource.CONNECTING) {
+        console.log('SSE连接正在重连...')
+        return // 正在重连，不处理错误
+      }
+      
+      executionResult.value = {
+        success: false,
+        error: { message: '连接错误，请检查网络连接或稍后重试' }
+      }
+      loading.value = false
+      executionStatus.value = null
+      eventSource.close()
+    }
+    
+    // 添加连接打开事件处理
+    eventSource.onopen = (event) => {
+      console.log('SSE连接已建立:', event)
+    }
     
   } catch (error) {
     console.error('PW测试执行失败:', error)
@@ -265,47 +302,103 @@ const handleRunPWTest = async () => {
       success: false,
       error: { message: error instanceof Error ? error.message : '执行失败' }
     }
-  } finally {
     loading.value = false
     executionStatus.value = null
   }
 }
 
-// 模拟执行过程
-const simulateExecutionProcess = () => {
-  const steps = [
-    '自然语言理解分析...',
-    '生成Playwright代码...',
-    '代码验证和优化...',
-    '启动浏览器...',
-    '访问目标页面...',
-    '执行测试步骤...',
-    '验证测试结果...',
-    '生成执行报告...'
-  ]
+// 处理SSE事件
+const handleSSEEvent = (data: any) => {
+  console.log('收到SSE事件:', data)
   
-  let currentStep = 0
-  const interval = setInterval(() => {
-    if (currentStep < steps.length) {
+  switch (data.type) {
+    case 'start':
       executionStatus.value = {
-        currentStep: steps[currentStep],
-        progress: Math.round((currentStep + 1) / steps.length * 100),
-        duration: currentStep + 1
+        currentStep: data.message,
+        progress: 0,
+        duration: 0
+      }
+      addLog('info', data.message)
+      break
+      
+    case 'step':
+      executionStatus.value = {
+        currentStep: data.message,
+        progress: data.progress || 0,
+        duration: Date.now()
+      }
+      addLog('info', data.message)
+      break
+      
+    case 'step_complete':
+      executionStatus.value = {
+        currentStep: data.message,
+        progress: data.progress || 0,
+        duration: Date.now()
+      }
+      addLog('success', data.message)
+      
+      // 保存生成的数据
+      if (data.data) {
+        if (data.step === 'code_generation') {
+          generatedCode.value = data.data.fullScript || ''
+        }
+      }
+      break
+      
+    case 'browser_action':
+      addLog('info', data.message)
+      break
+      
+    case 'test_step':
+      addLog('info', `步骤 ${data.step}: ${data.message}`)
+      break
+      
+    case 'test_step_complete':
+      addLog('success', `步骤 ${data.step}: ${data.message}`)
+      break
+      
+    case 'complete':
+      executionStatus.value = {
+        currentStep: data.message,
+        progress: 100,
+        duration: Date.now()
+      }
+      addLog('success', data.message)
+      
+      // 保存最终结果
+      if (data.data) {
+        executionResult.value = data.data.executionResult
+        generatedCode.value = data.data.generatedCode?.fullScript || ''
       }
       
-      // 添加日志
-      executionLogs.value.push({
-        level: 'info',
-        message: steps[currentStep],
-        timestamp: new Date()
-      })
+      loading.value = false
+      executionStatus.value = null
+      emit('success', data.data)
+      break
       
-      currentStep++
-    } else {
-      clearInterval(interval)
-    }
-  }, 1000)
+    case 'error':
+      addLog('error', data.message)
+      executionResult.value = {
+        success: false,
+        error: { message: data.message }
+      }
+      loading.value = false
+      executionStatus.value = null
+      break
+  }
 }
+
+// 添加日志
+const addLog = (level: string, message: string) => {
+  executionLogs.value.push({
+    level,
+    message,
+    timestamp: new Date()
+  })
+}
+
+
 
 // 停止执行
 const handleStopExecution = () => {
@@ -348,10 +441,42 @@ const getLogClass = (level: string) => {
       return 'text-red-600'
     case 'warn':
       return 'text-yellow-600'
+    case 'success':
+      return 'text-green-600'
     case 'info':
       return 'text-blue-600'
     default:
       return 'text-gray-600'
+  }
+}
+
+const getLogBorderClass = (level: string) => {
+  switch (level) {
+    case 'error':
+      return 'border-red-500 bg-red-50'
+    case 'warn':
+      return 'border-yellow-500 bg-yellow-50'
+    case 'success':
+      return 'border-green-500 bg-green-50'
+    case 'info':
+      return 'border-blue-500 bg-blue-50'
+    default:
+      return 'border-gray-300 bg-gray-50'
+  }
+}
+
+const getLogDotClass = (level: string) => {
+  switch (level) {
+    case 'error':
+      return 'bg-red-500'
+    case 'warn':
+      return 'bg-yellow-500'
+    case 'success':
+      return 'bg-green-500'
+    case 'info':
+      return 'bg-blue-500'
+    default:
+      return 'bg-gray-500'
   }
 }
 

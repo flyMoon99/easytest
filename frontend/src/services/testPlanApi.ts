@@ -51,7 +51,12 @@ export const testPlanAPI = {
    * 获取测试计划详情
    * @param id 测试计划ID
    */
-  getDetail: (id: string): Promise<TestPlan> => 
+  getDetail: (id: string): Promise<{
+    success: boolean;
+    message: string;
+    data: TestPlan;
+    timestamp: string;
+  }> => 
     api.get(`/test-plans/${id}`),
 
   /**
