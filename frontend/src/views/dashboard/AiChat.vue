@@ -19,7 +19,8 @@
             >
               <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
               <option value="qwen-vl-max">通义千问VL-Max</option>
-              <option value="gpt-3.5-turbo">ChatGPT (GPT-3.5 Turbo)</option>
+        
+              <option value="gpt-4o">ChatGPT (GPT-4o)</option>
             </select>
           </div>
           <div class="text-sm text-gray-500">
@@ -145,7 +146,7 @@ interface ChatMessage {
 const messages = ref<ChatMessage[]>([])
 const inputMessage = ref('')
 const isLoading = ref(false)
-const selectedModel = ref('gemini-2.0-flash')
+const selectedModel = ref('gpt-4o')
 const messagesContainer = ref<HTMLElement>()
 
 // Store
@@ -156,7 +157,8 @@ const getModelName = (modelId: string) => {
   const modelMap: Record<string, string> = {
     'gemini-2.0-flash': 'Gemini 2.0 Flash',
     'qwen-vl-max': '通义千问VL-Max',
-    'gpt-3.5-turbo': 'ChatGPT (GPT-3.5 Turbo)'
+
+    'gpt-4o': 'ChatGPT (GPT-4o)'
   }
   return modelMap[modelId] || modelId
 }

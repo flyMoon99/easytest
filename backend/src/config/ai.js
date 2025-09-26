@@ -17,7 +17,7 @@ export const getAiConfig = () => ({
   openai: {
     apiKey: process.env.OPENAI_API_KEY || 'your_openai_api_key_here',
     baseURL: process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1',
-    model: process.env.OPENAI_MODEL || 'gpt-3.5-turbo',
+    model: process.env.OPENAI_MODEL || 'gpt-4o',
     maxTokens: 2000,
     temperature: 0.1,
     timeout: 60000,
@@ -50,8 +50,8 @@ export const getAiConfig = () => ({
       description: '阿里云通义千问视觉语言大模型，支持图像理解和分析'
     },
     {
-      id: 'gpt-3.5-turbo',
-      name: 'ChatGPT (GPT-3.5 Turbo)',
+      id: 'gpt-4o',
+      name: 'ChatGPT (GPT-4o)',
       provider: 'openai',
       description: 'OpenAI ChatGPT模型，支持智能对话和文本生成'
     },

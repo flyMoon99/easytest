@@ -9,7 +9,10 @@ const genAI = new GoogleGenerativeAI(aiConfig.gemini.apiKey)
 // 初始化OpenAI
 const openai = new OpenAI({
   apiKey: aiConfig.openai.apiKey,
-  baseURL: aiConfig.openai.baseURL
+  baseURL: aiConfig.openai.baseURL,
+  defaultHeaders: {
+    'User-Agent': 'EasyTest/1.0'
+  }
 })
 
 /**
@@ -31,7 +34,7 @@ export const sendAiMessage = async (message, model, userId) => {
       case 'qwen-vl-max':
         response = await sendQwenMessage(message)
         break
-      case 'gpt-3.5-turbo':
+      case 'gpt-4o':
         response = await sendOpenAIMessage(message)
         break
       default:
@@ -75,7 +78,7 @@ export const sendAiMessageStream = async (message, model, userId, res) => {
       case 'qwen-vl-max':
         response = await sendQwenMessageStream(message, res)
         break
-      case 'gpt-3.5-turbo':
+      case 'gpt-4o':
         response = await sendOpenAIMessageStream(message, res)
         break
       default:
