@@ -53,75 +53,117 @@
       </div>
 
       <!-- 执行状态 -->
-      <div v-if="executionStatus" class="bg-yellow-50 p-4 rounded-lg">
-        <h3 class="text-lg font-medium text-gray-900 mb-2">执行状态</h3>
-        <div class="space-y-2">
-          <div class="flex items-center justify-between">
-            <span class="text-sm font-medium text-gray-700">当前步骤：</span>
-            <span class="text-sm text-gray-900">{{ executionStatus.currentStep }}</span>
-          </div>
-          <div class="flex items-center justify-between">
-            <span class="text-sm font-medium text-gray-700">执行进度：</span>
-            <span class="text-sm text-gray-900">{{ executionStatus.progress }}%</span>
-          </div>
-          <div class="flex items-center justify-between">
-            <span class="text-sm font-medium text-gray-700">执行时间：</span>
-            <span class="text-sm text-gray-900">{{ executionStatus.duration }}s</span>
+      <div v-if="executionStatus" class="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-lg font-medium text-blue-900">执行状态</h3>
+          <span class="text-sm text-blue-600">{{ formatDuration(executionStatus.duration) }}</span>
+        </div>
+        
+        <div class="space-y-3">
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-sm font-medium text-blue-900">{{ executionStatus.currentStep }}</span>
+              <span class="text-sm text-blue-600">{{ executionStatus.progress }}%</span>
+            </div>
+            <!-- 进度条 -->
+            <div v-if="executionStatus.progress > 0" class="w-full bg-blue-200 rounded-full h-2">
+              <div 
+                class="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                :style="{ width: `${executionStatus.progress}%` }"
+              ></div>
+            </div>
           </div>
         </div>
       </div>
 
       <!-- 执行日志 -->
-      <div v-if="executionLogs.length > 0" class="bg-gray-50 p-4 rounded-lg">
-        <h3 class="text-lg font-medium text-gray-900 mb-2">执行日志</h3>
-        <div class="space-y-2 max-h-60 overflow-y-auto">
-          <div
-            v-for="(log, index) in executionLogs"
-            :key="index"
-            class="flex items-start space-x-2 p-2 rounded border-l-4"
-            :class="getLogBorderClass(log.level)"
+      <div class="bg-gray-50 p-4 rounded-lg">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="text-lg font-medium text-gray-900">执行日志</h3>
+          <BaseButton
+            v-if="executionLogs.length > 0"
+            variant="outline"
+            size="sm"
+            @click="handleClearLogs"
+            :disabled="loading"
           >
-            <div class="flex-shrink-0 w-2 h-2 rounded-full mt-2" :class="getLogDotClass(log.level)"></div>
-            <div class="flex-1 min-w-0">
-              <div class="text-sm font-medium" :class="getLogClass(log.level)">
-                {{ log.message }}
-              </div>
-              <div class="text-xs text-gray-500 mt-1">
-                {{ formatTime(log.timestamp) }}
-              </div>
+            清空日志
+          </BaseButton>
+        </div>
+        <!-- 日志输出区域 - 终端风格 -->
+        <div class="bg-gray-900 text-green-400 p-4 rounded-lg font-mono text-sm overflow-y-auto max-h-80 min-h-40">
+          <div v-if="executionLogs.length === 0" class="text-gray-500">
+            等待测试开始...
+          </div>
+          <div v-else>
+            <div 
+              v-for="(log, index) in executionLogs" 
+              :key="index"
+              class="mb-1 whitespace-pre-wrap"
+              :class="{
+                'text-green-400': log.level === 'info',
+                'text-yellow-400': log.level === 'warn',
+                'text-red-400': log.level === 'error',
+                'text-blue-400': log.level === 'success'
+              }"
+            >
+              <span class="text-gray-500">[{{ formatTime(log.timestamp) }}]</span> {{ log.message }}
             </div>
           </div>
         </div>
       </div>
 
       <!-- 执行结果 -->
-      <div v-if="executionResult" class="bg-green-50 p-4 rounded-lg">
-        <h3 class="text-lg font-medium text-gray-900 mb-2">执行结果</h3>
+      <div v-if="executionResult" class="p-4 rounded-lg" :class="{
+        'bg-green-50 border border-green-200': executionResult.success,
+        'bg-red-50 border border-red-200': !executionResult.success
+      }">
+        <div class="flex items-center mb-3">
+          <svg v-if="executionResult.success" class="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <svg v-else class="w-5 h-5 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <h3 class="text-lg font-medium" :class="{
+            'text-green-900': executionResult.success,
+            'text-red-900': !executionResult.success
+          }">
+            {{ executionResult.success ? '测试执行成功' : '测试执行失败' }}
+          </h3>
+        </div>
+        
         <div class="space-y-2">
-          <div class="flex items-center justify-between">
-            <span class="text-sm font-medium text-gray-700">执行状态：</span>
-            <span :class="getResultClass(executionResult.success)">
-              {{ executionResult.success ? '成功' : '失败' }}
-            </span>
-          </div>
           <div class="flex items-center justify-between">
             <span class="text-sm font-medium text-gray-700">执行时长：</span>
             <span class="text-sm text-gray-900">{{ executionResult.duration }}ms</span>
           </div>
-          <div v-if="executionResult.error" class="mt-2 p-2 bg-red-100 rounded text-sm text-red-800">
+          
+          <!-- 执行摘要 -->
+          <div v-if="executionResult.summary" class="mt-3 text-sm" :class="{
+            'text-green-700': executionResult.success,
+            'text-red-700': !executionResult.success
+          }">
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <p><span class="font-medium">总步骤:</span> {{ executionResult.summary.totalSteps }}</p>
+                <p><span class="font-medium">成功步骤:</span> {{ executionResult.summary.successfulSteps }}</p>
+              </div>
+              <div>
+                <p><span class="font-medium">失败步骤:</span> {{ executionResult.summary.failedSteps }}</p>
+                <p><span class="font-medium">成功率:</span> {{ executionResult.summary.successRate }}%</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 错误信息 -->
+          <div v-if="!executionResult.success && executionResult.error" class="mt-3 p-3 bg-red-100 rounded-lg text-sm text-red-800">
             <span class="font-medium">错误信息：</span>
-            {{ executionResult.error.message }}
+            {{ typeof executionResult.error === 'string' ? executionResult.error : executionResult.error.message }}
           </div>
         </div>
       </div>
 
-      <!-- 代码预览 -->
-      <div v-if="generatedCode" class="bg-gray-50 p-4 rounded-lg">
-        <h3 class="text-lg font-medium text-gray-900 mb-2">生成的代码</h3>
-        <div class="bg-gray-900 text-green-400 p-3 rounded text-sm font-mono overflow-x-auto">
-          <pre>{{ generatedCode }}</pre>
-        </div>
-      </div>
     </div>
 
     <!-- 底部按钮 -->
@@ -187,7 +229,6 @@ const loading = ref(false)
 const executionStatus = ref<any>(null)
 const executionLogs = ref<any[]>([])
 const executionResult = ref<any>(null)
-const generatedCode = ref<string>('')
 
 // 配置
 const config = ref({
@@ -208,7 +249,6 @@ const resetState = () => {
   executionStatus.value = null
   executionLogs.value = []
   executionResult.value = null
-  generatedCode.value = ''
 }
 
 // 加载PW测试状态
@@ -219,10 +259,6 @@ const loadPWTestStatus = async () => {
     loading.value = true
     const response = await pwTestApi.getStatus(props.testCase.testCaseId)
     
-    if (response && response.hasGeneratedCode) {
-      // 如果有生成的代码，显示代码预览
-      generatedCode.value = response.generatedCode?.fullScript || ''
-    }
   } catch (error) {
     console.error('加载PW测试状态失败:', error)
   } finally {
@@ -312,12 +348,20 @@ const handleSSEEvent = (data: any) => {
   console.log('收到SSE事件:', data)
   
   switch (data.type) {
+    case 'connection':
+      addLog('info', data.message)
+      break
+      
     case 'start':
       executionStatus.value = {
         currentStep: data.message,
-        progress: 0,
+        progress: 5,
         duration: 0
       }
+      addLog('info', data.message)
+      break
+      
+    case 'log':
       addLog('info', data.message)
       break
       
@@ -337,13 +381,6 @@ const handleSSEEvent = (data: any) => {
         duration: Date.now()
       }
       addLog('success', data.message)
-      
-      // 保存生成的数据
-      if (data.data) {
-        if (data.step === 'code_generation') {
-          generatedCode.value = data.data.fullScript || ''
-        }
-      }
       break
       
     case 'browser_action':
@@ -360,28 +397,36 @@ const handleSSEEvent = (data: any) => {
       
     case 'complete':
       executionStatus.value = {
-        currentStep: data.message,
+        currentStep: '测试执行完成',
         progress: 100,
         duration: Date.now()
       }
-      addLog('success', data.message)
+      
+      if (data.success) {
+        addLog('success', '测试执行成功')
+      } else {
+        addLog('error', data.error || '测试执行失败')
+      }
       
       // 保存最终结果
-      if (data.data) {
-        executionResult.value = data.data.executionResult
-        generatedCode.value = data.data.generatedCode?.fullScript || ''
+      executionResult.value = {
+        success: data.success,
+        error: data.error,
+        summary: data.summary,
+        duration: data.duration || 0
       }
       
       loading.value = false
       executionStatus.value = null
-      emit('success', data.data)
+      emit('success', { success: data.success, summary: data.summary })
       break
       
     case 'error':
       addLog('error', data.message)
       executionResult.value = {
         success: false,
-        error: { message: data.message }
+        error: data.message,
+        duration: 0
       }
       loading.value = false
       executionStatus.value = null
@@ -396,18 +441,44 @@ const addLog = (level: string, message: string) => {
     message,
     timestamp: new Date()
   })
+  
+  // 自动滚动到底部
+  setTimeout(() => {
+    const logContainer = document.querySelector('.overflow-y-auto')
+    if (logContainer) {
+      logContainer.scrollTop = logContainer.scrollHeight
+    }
+  }, 100)
+}
+
+// 清空日志
+const handleClearLogs = () => {
+  executionLogs.value = []
+  executionResult.value = null
+}
+
+// 格式化持续时间
+const formatDuration = (duration: number) => {
+  const seconds = Math.floor(duration / 1000)
+  const minutes = Math.floor(seconds / 60)
+  const remainingSeconds = seconds % 60
+  
+  if (minutes > 0) {
+    return `${minutes}分${remainingSeconds}秒`
+  }
+  return `${remainingSeconds}秒`
 }
 
 
 
 // 停止执行
 const handleStopExecution = () => {
+  loading.value = false
   executionStatus.value = null
-  executionLogs.value.push({
-    level: 'warn',
-    message: '用户手动停止执行',
-    timestamp: new Date()
-  })
+  addLog('warn', '用户手动停止执行')
+  
+  // 如果有EventSource连接，关闭它
+  // 这里需要在handleRunPWTest中保存eventSource引用
 }
 
 // 关闭弹窗
@@ -431,54 +502,6 @@ const getStatusText = (result?: string) => {
   }
 }
 
-const getResultClass = (success: boolean) => {
-  return success ? 'text-green-600' : 'text-red-600'
-}
-
-const getLogClass = (level: string) => {
-  switch (level) {
-    case 'error':
-      return 'text-red-600'
-    case 'warn':
-      return 'text-yellow-600'
-    case 'success':
-      return 'text-green-600'
-    case 'info':
-      return 'text-blue-600'
-    default:
-      return 'text-gray-600'
-  }
-}
-
-const getLogBorderClass = (level: string) => {
-  switch (level) {
-    case 'error':
-      return 'border-red-500 bg-red-50'
-    case 'warn':
-      return 'border-yellow-500 bg-yellow-50'
-    case 'success':
-      return 'border-green-500 bg-green-50'
-    case 'info':
-      return 'border-blue-500 bg-blue-50'
-    default:
-      return 'border-gray-300 bg-gray-50'
-  }
-}
-
-const getLogDotClass = (level: string) => {
-  switch (level) {
-    case 'error':
-      return 'bg-red-500'
-    case 'warn':
-      return 'bg-yellow-500'
-    case 'success':
-      return 'bg-green-500'
-    case 'info':
-      return 'bg-blue-500'
-    default:
-      return 'bg-gray-500'
-  }
-}
 
 const formatTime = (timestamp: Date) => {
   return timestamp.toLocaleTimeString('zh-CN', {

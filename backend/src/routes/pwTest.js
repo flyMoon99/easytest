@@ -4,13 +4,9 @@ import { successResponse, errorResponse, serverErrorResponse } from '../utils/re
 import { 
   runCompletePWTest, 
   executePWTest, 
-  parseTestDescription, 
-  generatePlaywrightCode, 
-  validateAndOptimizeCode,
   runStreamingPWTest
 } from '../services/pwTestService.js';
 import TestCase from '../models/TestCase.js';
-import GeneratedCode from '../models/GeneratedCode.js';
 
 const router = express.Router();
 
@@ -30,7 +26,7 @@ router.options('/stream/:testCaseId', (req, res) => {
 });
 
 /**
- * 流式执行完整的PW测试流程
+ * 流式执行完整的PW测试流程 - 使用MCP架构
  * GET /api/pw-test/stream/:testCaseId
  */
 router.get('/stream/:testCaseId', authenticateToken, async (req, res) => {
@@ -91,7 +87,7 @@ router.get('/stream/:testCaseId', authenticateToken, async (req, res) => {
 });
 
 /**
- * 执行完整的PW测试流程
+ * 执行完整的PW测试流程 - 使用MCP架构
  * POST /api/pw-test/run/:testCaseId
  */
 router.post('/run/:testCaseId', authenticateToken, async (req, res) => {
@@ -117,7 +113,7 @@ router.post('/run/:testCaseId', authenticateToken, async (req, res) => {
 });
 
 /**
- * 仅执行已生成的PW测试代码
+ * 执行PW测试 - 使用MCP架构
  * POST /api/pw-test/execute/:testCaseId
  */
 router.post('/execute/:testCaseId', authenticateToken, async (req, res) => {
@@ -142,112 +138,6 @@ router.post('/execute/:testCaseId', authenticateToken, async (req, res) => {
   }
 });
 
-/**
- * 自然语言理解分析
- * POST /api/pw-test/analyze/:testCaseId
- */
-router.post('/analyze/:testCaseId', authenticateToken, async (req, res) => {
-  try {
-    const { testCaseId } = req.params;
-    const userId = req.user._id;
-
-    console.log(`开始自然语言理解分析，测试用例ID: ${testCaseId}`);
-
-    // 获取测试用例
-    const testCase = await TestCase.findOne({
-      _id: testCaseId,
-      memberId: userId
-    });
-
-    if (!testCase) {
-      return errorResponse(res, '测试用例不存在或无权访问', 404);
-    }
-
-    const result = await parseTestDescription(testCase);
-
-    if (!result.success) {
-      return errorResponse(res, result.error, 400);
-    }
-
-    return successResponse(res, result.data, '自然语言理解分析完成');
-
-  } catch (error) {
-    console.error('自然语言理解分析失败:', error);
-    return serverErrorResponse(res, '自然语言理解分析失败');
-  }
-});
-
-/**
- * 生成Playwright代码
- * POST /api/pw-test/generate/:testCaseId
- */
-router.post('/generate/:testCaseId', authenticateToken, async (req, res) => {
-  try {
-    const { testCaseId } = req.params;
-    const { nluResult } = req.body;
-    const userId = req.user._id;
-
-    console.log(`开始生成Playwright代码，测试用例ID: ${testCaseId}`);
-
-    // 获取测试用例
-    const testCase = await TestCase.findOne({
-      _id: testCaseId,
-      memberId: userId
-    });
-
-    if (!testCase) {
-      return errorResponse(res, '测试用例不存在或无权访问', 404);
-    }
-
-    const result = await generatePlaywrightCode(testCase, nluResult);
-
-    if (!result.success) {
-      return errorResponse(res, result.error, 400);
-    }
-
-    return successResponse(res, result.data, 'Playwright代码生成完成');
-
-  } catch (error) {
-    console.error('生成Playwright代码失败:', error);
-    return serverErrorResponse(res, '生成Playwright代码失败');
-  }
-});
-
-/**
- * 验证和优化代码
- * POST /api/pw-test/optimize/:testCaseId
- */
-router.post('/optimize/:testCaseId', authenticateToken, async (req, res) => {
-  try {
-    const { testCaseId } = req.params;
-    const { generatedCode } = req.body;
-    const userId = req.user._id;
-
-    console.log(`开始验证和优化代码，测试用例ID: ${testCaseId}`);
-
-    // 获取测试用例
-    const testCase = await TestCase.findOne({
-      _id: testCaseId,
-      memberId: userId
-    });
-
-    if (!testCase) {
-      return errorResponse(res, '测试用例不存在或无权访问', 404);
-    }
-
-    const result = await validateAndOptimizeCode(generatedCode, testCase);
-
-    if (!result.success) {
-      return errorResponse(res, result.error, 400);
-    }
-
-    return successResponse(res, result.data, '代码验证和优化完成');
-
-  } catch (error) {
-    console.error('代码验证和优化失败:', error);
-    return serverErrorResponse(res, '代码验证和优化失败');
-  }
-});
 
 /**
  * 获取测试用例的PW测试状态
@@ -275,11 +165,6 @@ router.get('/status/:testCaseId', authenticateToken, async (req, res) => {
       ? testCase.executionHistory[testCase.executionHistory.length - 1]
       : null;
 
-    // 获取代码版本历史
-    const codeHistory = await GeneratedCode.find({ testCaseId })
-      .sort({ 'version.full': -1 })
-      .select('version metadata status createdAt')
-      .limit(5);
 
     const status = {
       testCaseId,
@@ -297,12 +182,6 @@ router.get('/status/:testCaseId', authenticateToken, async (req, res) => {
         duration: latestExecution.duration
       } : null,
       statistics: testCase.pwTestStatistics,
-      codeHistory: codeHistory.map(code => ({
-        version: code.version.full,
-        qualityScore: code.metadata.qualityScore,
-        status: code.status,
-        createdAt: code.createdAt
-      })),
       nluResult: testCase.intelligentAnalysis?.nluResult || null
     };
 
@@ -359,72 +238,7 @@ router.get('/history/:testCaseId', authenticateToken, async (req, res) => {
   }
 });
 
-/**
- * 获取代码版本历史
- * GET /api/pw-test/code-history/:testCaseId
- */
-router.get('/code-history/:testCaseId', authenticateToken, async (req, res) => {
-  try {
-    const { testCaseId } = req.params;
-    const { page = 1, limit = 10 } = req.query;
-    const userId = req.user._id;
 
-    console.log(`获取代码版本历史，测试用例ID: ${testCaseId}`);
-
-    const skip = (parseInt(page) - 1) * parseInt(limit);
-
-    const [codeHistory, total] = await Promise.all([
-      GeneratedCode.find({ testCaseId, memberId: userId })
-        .sort({ 'version.full': -1 })
-        .skip(skip)
-        .limit(parseInt(limit))
-        .select('version metadata status createdAt'),
-      GeneratedCode.countDocuments({ testCaseId, memberId: userId })
-    ]);
-
-    return successResponse(res, {
-      codeHistory,
-      pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
-        total,
-        totalPages: Math.ceil(total / parseInt(limit))
-      }
-    }, '获取代码版本历史成功');
-
-  } catch (error) {
-    console.error('获取代码版本历史失败:', error);
-    return serverErrorResponse(res, '获取代码版本历史失败');
-  }
-});
-
-/**
- * 获取特定版本的代码详情
- * GET /api/pw-test/code/:codeId
- */
-router.get('/code/:codeId', authenticateToken, async (req, res) => {
-  try {
-    const { codeId } = req.params;
-    const userId = req.user._id;
-
-    console.log(`获取代码详情，代码ID: ${codeId}`);
-
-    const code = await GeneratedCode.findOne({
-      _id: codeId,
-      memberId: userId
-    });
-
-    if (!code) {
-      return errorResponse(res, '代码不存在或无权访问', 404);
-    }
-
-    return successResponse(res, code, '获取代码详情成功');
-
-  } catch (error) {
-    console.error('获取代码详情失败:', error);
-    return serverErrorResponse(res, '获取代码详情失败');
-  }
-});
 
 /**
  * 更新PW测试配置

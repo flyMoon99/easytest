@@ -56,20 +56,6 @@ export const pwTestApi = {
   getHistory: (testCaseId: string, params: any = {}) => 
     api.get(`/pw-test/history/${testCaseId}`, { params }),
 
-  /**
-   * 获取代码版本历史
-   * @param testCaseId 测试用例ID
-   * @param params 查询参数
-   */
-  getCodeHistory: (testCaseId: string, params: any = {}) => 
-    api.get(`/pw-test/code-history/${testCaseId}`, { params }),
-
-  /**
-   * 获取特定版本的代码详情
-   * @param codeId 代码ID
-   */
-  getCodeDetail: (codeId: string) => 
-    api.get(`/pw-test/code/${codeId}`),
 
   /**
    * 更新PW测试配置

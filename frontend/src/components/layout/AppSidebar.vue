@@ -88,6 +88,21 @@
           </svg>
           测试计划
         </router-link>
+
+        <router-link
+          to="/dashboard/singleton-test"
+          :class="[
+            'flex items-center px-6 py-2 text-sm rounded-lg transition-colors ml-8',
+            $route.name === 'singleton-test'
+              ? 'bg-primary-50 text-primary-700'
+              : 'text-gray-600 hover:bg-gray-50'
+          ]"
+        >
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+          单例测试
+        </router-link>
       </div>
 
       <!-- 视频管理 -->

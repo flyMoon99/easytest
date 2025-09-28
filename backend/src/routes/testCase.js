@@ -5,7 +5,6 @@ import fs from 'fs';
 import { successResponse, errorResponse, serverErrorResponse } from '../utils/response.js';
 import { authenticateToken } from '../middleware/auth.js';
 import TestCase from '../models/TestCase.js';
-import { captureWebsiteScreenshot } from '../services/playwrightService.js';
 import { analyzeScreenshotAndGenerateScripts, getAvailableModels } from '../services/aiService.js';
 import { detectTestType, getAvailableTestTypes } from '../services/promptService.js';
 import Joi from 'joi';

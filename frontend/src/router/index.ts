@@ -118,6 +118,12 @@ const router = createRouter({
           component: () => import('@/views/dashboard/TestPlanRelatedCases.vue'),
           meta: { title: '关联用例范围 - 易测平台' },
           props: true
+        },
+        {
+          path: 'singleton-test',
+          name: 'singleton-test',
+          component: () => import('@/views/dashboard/SingletonTest.vue'),
+          meta: { title: '单例测试 - 易测平台' }
         }
       ]
     },

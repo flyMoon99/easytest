@@ -7,6 +7,7 @@ import testResultRoutes from './testResult.js';
 import testCaseDirectoryRoutes from './testCaseDirectory.js';
 import testPlanRoutes from './testPlan.js';
 import pwTestRoutes from './pwTest.js';
+import singletonTestRoutes from './singletonTest.js';
 import { successResponse } from '../utils/response.js';
 
 const router = express.Router();
@@ -42,6 +43,7 @@ router.get('/', (req, res) => {
       'test-results': '/api/test-results',
       'ai-chat': '/api/ai-chat',
       'pw-test': '/api/pw-test',
+      'singleton-test': '/api/singleton-test',
       health: '/api/health'
     },
     documentation: 'API文档待完善'
@@ -71,5 +73,8 @@ router.use('/test-plans', testPlanRoutes);
 
 // PW测试路由
 router.use('/pw-test', pwTestRoutes);
+
+// 单例测试路由
+router.use('/singleton-test', singletonTestRoutes);
 
 export default router;
